@@ -5,7 +5,6 @@ import nexters.weski.common.BaseEntity
 import nexters.weski.slope.Slope
 import nexters.weski.webcam.Webcam
 
-
 @Entity
 @Table(name = "ski_resorts")
 data class SkiResort(
