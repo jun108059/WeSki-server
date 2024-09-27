@@ -10,7 +10,7 @@ class SkiResortController(
     private val skiResortService: SkiResortService
 ) {
     @GetMapping
-    fun getAllSkiResorts(): List<SkiResortDto> {
-        return skiResortService.getAllSkiResorts()
+    fun getAllSkiResorts(): List<SkiResortResponseDto> {
+        return skiResortService.getAllSkiResortsAndWeather()
     }
 }
