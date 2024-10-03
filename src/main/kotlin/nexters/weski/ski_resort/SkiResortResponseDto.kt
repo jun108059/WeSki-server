@@ -1,10 +1,12 @@
 package nexters.weski.ski_resort
 
+import io.swagger.v3.oas.annotations.media.Schema
 import nexters.weski.weather.CurrentWeather
 import nexters.weski.weather.DailyWeather
 import nexters.weski.weather.SimpleCurrentWeatherDto
 import nexters.weski.weather.WeeklyWeatherDto
 
+@Schema(description = "스키장 정보 응답 DTO")
 data class SkiResortResponseDto(
     val resortId: Long,
     val name: String,
