@@ -13,13 +13,12 @@ class SwaggerConfig {
         return OpenAPI()
             .info(
                 Info()
-                    .title("We-ski API")
-                    .description("we-ski server API")
+                    .title("We SKI API")
+                    .description("we-ski app server API docs")
                     .version("1.0.0")
             )
             .servers(
                 listOf(
-                    io.swagger.v3.oas.models.servers.Server().url("http://localhost:8080"),
                     io.swagger.v3.oas.models.servers.Server().url("http://223.130.154.51:8080")
                 )
             )
