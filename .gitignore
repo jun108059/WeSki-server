@@ -1,3 +1,6 @@
+docker-compose.yml
+Dockerfile
+
 HELP.md
 .gradle
 build/

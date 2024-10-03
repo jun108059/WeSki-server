@@ -2,10 +2,8 @@ package nexters.weski
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 
-@SpringBootApplication
-@EnableJpaAuditing
+@SpringBootApplication(scanBasePackages = ["nexters.weski"])
 class WeskiApplication
 
 fun main(args: Array<String>) {

@@ -1,0 +1,21 @@
+### 변수 설정
+@resortId = 1
+
+### 스키장 정보 조회 API
+GET http://localhost:8080/api/ski-resorts
+
+### 날씨 정보 조회 API
+GET http://localhost:8080/api/weather/{{resortId}}
+
+### 슬로프 정보 조회 API
+GET http://localhost:8080/api/slopes/{{resortId}}
+
+### 설질 정보 조회 API
+GET http://localhost:8080/api/snow-maker/{{resortId}}
+
+### 설질 투표 API(부정)
+POST http://localhost:8080/api/snow-maker/{{resortId}}/vote?isPositive=false
+
+### 설질 투표 API(긍정)
+POST http://localhost:8080/api/snow-maker/{{resortId}}/vote?isPositive=true
+
