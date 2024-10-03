@@ -3,20 +3,18 @@ package nexters.weski.weather
 import jakarta.persistence.*
 import nexters.weski.common.BaseEntity
 import nexters.weski.ski_resort.SkiResort
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Entity
-@Table(name = "daily_weather")
-data class DailyWeather(
+@Table(name = "hourly_weather")
+data class HourlyWeather(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    val forecastDate: LocalDate,
-    val dayOfWeek: String,
+    val forecastTime: LocalDateTime,
+    val temperature: Int,
     val precipitationChance: Int,
-    val maxTemp: Int,
-    val minTemp: Int,
     val condition: String,
 
     @ManyToOne

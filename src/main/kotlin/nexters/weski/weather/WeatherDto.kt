@@ -1,5 +1,7 @@
 package nexters.weski.weather
 
+import java.time.LocalDateTime
+
 data class WeatherDto(
     val resortId: Long,
     val currentWeather: CurrentWeatherDto,
@@ -24,8 +26,8 @@ data class WeatherDto(
 
 data class CurrentWeatherDto(
     val temperature: Int,
-    val maxTemp: Int,
-    val minTemp: Int,
+    val maxTemperature: Int,
+    val minTemperature: Int,
     val feelsLike: Int,
     val description: String,
     val condition: String
@@ -34,11 +36,11 @@ data class CurrentWeatherDto(
         fun fromEntity(entity: CurrentWeather): CurrentWeatherDto {
             return CurrentWeatherDto(
                 temperature = entity.temperature,
-                maxTemp = entity.maxTemp,
-                minTemp = entity.minTemp,
+                maxTemperature = entity.maxTemp,
+                minTemperature = entity.minTemp,
                 feelsLike = entity.feelsLike,
                 description = entity.description,
-                condition = entity.condition.name
+                condition = entity.condition
             )
         }
     }
@@ -47,16 +49,16 @@ data class CurrentWeatherDto(
 data class HourlyWeatherDto(
     val time: String,
     val temperature: Int,
-    val precipitationChance: Int,
+    val precipitationChance: String,
     val condition: String
 ) {
     companion object {
         fun fromEntity(entity: HourlyWeather): HourlyWeatherDto {
             return HourlyWeatherDto(
-                time = entity.forecastTime.toLocalTime().toString(),
+                time = entity.forecastTime.toLocalTimeString(),
                 temperature = entity.temperature,
-                precipitationChance = entity.precipitationChance,
-                condition = entity.condition.name
+                precipitationChance = entity.precipitationChance.toPercentString(),
+                condition = entity.condition
             )
         }
     }
@@ -65,22 +67,20 @@ data class HourlyWeatherDto(
 data class DailyWeatherDto(
     val day: String,
     val date: String,
-    val precipitationChance: Int,
-    val maxTemp: Int,
-    val minTemp: Int,
-    val dayCondition: String,
-    val nightCondition: String
+    val precipitationChance: String,
+    val maxTemperature: Int,
+    val minTemperature: Int,
+    val condition: String,
 ) {
     companion object {
         fun fromEntity(entity: DailyWeather): DailyWeatherDto {
             return DailyWeatherDto(
                 day = entity.dayOfWeek,
-                date = entity.forecastDate.toString(),
-                precipitationChance = entity.precipitationChance,
-                maxTemp = entity.maxTemp,
-                minTemp = entity.minTemp,
-                dayCondition = entity.dayCondition.name,
-                nightCondition = entity.nightCondition.name
+                date = entity.forecastDate.toString().toShortDate(),
+                precipitationChance = entity.precipitationChance.toPercentString(),
+                maxTemperature = entity.maxTemp,
+                minTemperature = entity.minTemp,
+                condition = entity.condition,
             )
         }
     }
@@ -109,11 +109,34 @@ data class WeeklyWeatherDto(
     companion object {
         fun fromEntity(entity: DailyWeather): WeeklyWeatherDto {
             return WeeklyWeatherDto(
-                day = TODO(),
+                day = entity.dayOfWeek,
                 maxTemperature = entity.maxTemp,
                 minTemperature = entity.minTemp,
-                description = entity.dayCondition.name
+                description = entity.condition
             )
         }
+    }
+}
+
+// 2024-08-01 형태에서 8.1 형태로 변경하는 메서드 호출
+fun String.toShortDate(): String {
+    val date = this.split("-")
+    return "${date[1]}.${date[2]}"
+}
+
+// Int 데이터를 Int+% String으로 변환하는 메서드
+fun Int.toPercentString(): String {
+    return "$this%"
+}
+
+// LocalDateTime 데이터를 오전/오후 n시로 변경하는 메서드
+fun LocalDateTime.toLocalTimeString(): String {
+    val hour = this.hour
+    return if (hour < 12) {
+        "오전 ${hour}시"
+    } else if (hour == 12) {
+        "오후 ${hour}시"
+    } else {
+        "오후 ${hour - 12}시"
     }
 }

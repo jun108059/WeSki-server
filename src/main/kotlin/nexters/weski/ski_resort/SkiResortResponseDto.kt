@@ -27,7 +27,7 @@ data class SkiResortResponseDto(
                 currentWeather = currentWeather?.let {
                     SimpleCurrentWeatherDto(
                         temperature = it.temperature,
-                        description = it.condition.name
+                        description = it.condition
                     )
                 } ?: SimpleCurrentWeatherDto(0, "정보 없음"),
                 weeklyWeather = weeklyWeather.map {
@@ -35,7 +35,7 @@ data class SkiResortResponseDto(
                         day = it.dayOfWeek,
                         maxTemperature = it.maxTemp,
                         minTemperature = it.minTemp,
-                        description = it.dayCondition.name
+                        description = it.condition
                     )
                 }
             )

@@ -15,9 +15,7 @@ data class CurrentWeather(
     val minTemp: Int,
     val feelsLike: Int,
     val description: String,
-
-    @Enumerated(EnumType.STRING)
-    val condition: WeatherCondition,
+    val condition: String,
 
     @OneToOne
     @MapsId
