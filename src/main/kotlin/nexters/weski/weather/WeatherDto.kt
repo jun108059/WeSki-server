@@ -15,7 +15,7 @@ data class WeatherDto(
             dailyWeather: List<DailyWeather>
         ): WeatherDto {
             return WeatherDto(
-                resortId = currentWeather.resortId,
+                resortId = currentWeather.skiResort.resortId,
                 currentWeather = CurrentWeatherDto.fromEntity(currentWeather),
                 hourlyWeather = hourlyWeather.map { HourlyWeatherDto.fromEntity(it) },
                 weeklyWeather = dailyWeather.map { DailyWeatherDto.fromEntity(it) }
