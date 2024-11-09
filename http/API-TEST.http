@@ -19,3 +19,5 @@ POST http://localhost:8080/api/snow-maker/{{resortId}}/vote?isPositive=false
 ### 설질 투표 API(긍정)
 POST http://localhost:8080/api/snow-maker/{{resortId}}/vote?isPositive=true
 
+### 혼잡도 조회
+GET http://localhost:8080/api/congestion/{{resortId}}
