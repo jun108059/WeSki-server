@@ -5,10 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import jakarta.transaction.Transactional
 import nexters.weski.ski_resort.SkiResort
 import nexters.weski.ski_resort.SkiResortRepository
-import nexters.weski.weather.CurrentWeather
-import nexters.weski.weather.CurrentWeatherRepository
-import nexters.weski.weather.DailyWeather
-import nexters.weski.weather.DailyWeatherRepository
+import nexters.weski.weather.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -21,6 +18,7 @@ import kotlin.math.pow
 class ExternalWeatherService(
     private val currentWeatherRepository: CurrentWeatherRepository,
     private val dailyWeatherRepository: DailyWeatherRepository,
+    private val hourlyWeatherRepository: HourlyWeatherRepository,
     private val skiResortRepository: SkiResortRepository
 ) {
     @Value("\${weather.api.key}")
@@ -158,7 +156,7 @@ class ExternalWeatherService(
 
     @Transactional
     fun updateDailyWeather() {
-        val baseDateTime = getBaseDateTime()
+        val baseDateTime = getYesterdayBaseDateTime()
         val baseDate = baseDateTime.first
         val baseTime = baseDateTime.second
 
@@ -185,7 +183,7 @@ class ExternalWeatherService(
         }
     }
 
-    private fun getBaseDateTime(): Pair<LocalDate, String> {
+    private fun getYesterdayBaseDateTime(): Pair<LocalDate, String> {
         // 어제 날짜
         val yesterday = LocalDate.now().minusDays(1)
         val hour = 18 // 18시 기준
@@ -339,10 +337,226 @@ class ExternalWeatherService(
     }
 
     @Transactional
-    fun updateDDayValues() {
-        // d_day 값이 0인 데이터 삭제
-        dailyWeatherRepository.deleteByDDay(0)
-        // 나머지 데이터의 d_day 값을 1씩 감소
-        dailyWeatherRepository.decrementDDayValues()
+    fun updateHourlyAndDailyWeather() {
+        val baseDateTime = getBaseDateTime()
+        val baseDate = baseDateTime.first
+        val baseTime = baseDateTime.second
+
+        skiResortRepository.findAll().forEach { resort ->
+            val nx = resort.xCoordinate
+            val ny = resort.yCoordinate
+
+            val url = buildVilageFcstUrl(baseDate, baseTime, nx, ny)
+            val response = restTemplate.getForObject(url, String::class.java)
+            val forecastData = parseVilageFcstResponse(response)
+
+            // 시간대별 날씨 업데이트
+            val hourlyWeathers = createHourlyWeather(resort, forecastData)
+            hourlyWeatherRepository.deleteBySkiResort(resort)
+            hourlyWeatherRepository.saveAll(hourlyWeathers)
+
+            // 주간 날씨 업데이트
+            updateShortTermDailyWeather(resort, forecastData)
+        }
+    }
+
+    private fun getBaseDateTime(): Pair<String, String> {
+        // 전날 23시 return(ex: 20241109 2300)
+        val yesterday = LocalDateTime.now().minusDays(1)
+            .format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+        val baseTime = "2300"
+        return Pair(yesterday, baseTime)
+    }
+
+    private fun buildVilageFcstUrl(baseDate: String, baseTime: String, nx: String, ny: String): String {
+        return "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst" +
+                "?serviceKey=$apiKey" +
+                "&pageNo=1" +
+                "&numOfRows=1000" +
+                "&dataType=JSON" +
+                "&base_date=$baseDate" +
+                "&base_time=$baseTime" +
+                "&nx=$nx" +
+                "&ny=$ny"
+    }
+
+    private fun parseVilageFcstResponse(response: String?): List<ForecastItem> {
+        response ?: return emptyList()
+        val rootNode = objectMapper.readTree(response)
+        val itemsNode = rootNode["response"]["body"]["items"]["item"]
+        val items = mutableListOf<ForecastItem>()
+
+        itemsNode?.forEach { itemNode ->
+            val category = itemNode["category"].asText()
+            val fcstDate = itemNode["fcstDate"].asText()
+            val fcstTime = itemNode["fcstTime"].asText()
+            val fcstValue = itemNode["fcstValue"].asText()
+            items.add(ForecastItem(category, fcstDate, fcstTime, fcstValue))
+        }
+
+        return items
+    }
+
+    data class ForecastItem(
+        val category: String,
+        val fcstDate: String,
+        val fcstTime: String,
+        val fcstValue: String
+    )
+
+    private fun createHourlyWeather(
+        resort: SkiResort,
+        forecastData: List<ForecastItem>
+    ): List<HourlyWeather> {
+        val hourlyWeathers = mutableListOf<HourlyWeather>()
+        val timeSlots = generateTimeSlots()
+
+        var priority = 1
+        for (timeSlot in timeSlots) {
+            val dataForTime = forecastData.filter { it.fcstDate == timeSlot.first && it.fcstTime == timeSlot.second }
+            if (dataForTime.isEmpty()) continue
+
+            val dataMap = dataForTime.groupBy { it.category }.mapValues { it.value.first().fcstValue }
+            val temperature = dataMap["TMP"]?.toIntOrNull() ?: continue
+            val precipitationChance = dataMap["POP"]?.toIntOrNull() ?: continue
+            val sky = dataMap["SKY"]?.toIntOrNull() ?: 1
+            val pty = dataMap["PTY"]?.toIntOrNull() ?: 0
+            val condition = determineCondition(sky, pty)
+
+            val forecastTime = formatForecastTime(timeSlot.second)
+            val hourlyWeather = HourlyWeather(
+                skiResort = resort,
+                forecastTime = forecastTime,
+                priority = priority,
+                temperature = temperature,
+                precipitationChance = precipitationChance,
+                condition = condition
+            )
+            hourlyWeathers.add(hourlyWeather)
+            priority++
+        }
+        return hourlyWeathers
+    }
+
+    private fun generateTimeSlots(): List<Pair<String, String>> {
+        val timeSlots = mutableListOf<Pair<String, String>>()
+        val today = LocalDate.now()
+        val tomorrow = today.plusDays(1)
+        val format = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+        val times = listOf("0800", "1000", "1200", "1400", "1600", "1800", "2000", "2200", "0000", "0200")
+        for (time in times) {
+            val date = if (time == "0000" || time == "0200") tomorrow.format(format) else today.format(format)
+            timeSlots.add(Pair(date, time))
+        }
+        return timeSlots
+    }
+
+    private fun formatForecastTime(fcstTime: String): String {
+        val hour = fcstTime.substring(0, 2).toInt()
+        val period = if (hour < 12) "오전" else "오후"
+        val hourIn12 = if (hour == 0 || hour == 12) 12 else hour % 12
+        return "$period ${hourIn12}시"
+    }
+
+    private fun determineCondition(sky: Int, pty: Int): String {
+        return when (pty) {
+            1 -> "비"
+            2 -> "비/눈"
+            3 -> "눈"
+            4 -> "소나기"
+            else -> when (sky) {
+                1 -> "맑음"
+                3 -> "구름많음"
+                4 -> "흐림"
+                else -> "맑음"
+            }
+        }
+    }
+
+    private fun updateShortTermDailyWeather(
+        resort: SkiResort,
+        forecastData: List<ForecastItem>
+    ) {
+        val today = LocalDate.now()
+        val tomorrow = today.plusDays(1)
+        val format = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+        val days = listOf(Pair(today, 0), Pair(tomorrow, 1))
+        days.forEach { (date, dDay) ->
+            val dateStr = date.format(format)
+            val dataForDay = forecastData.filter { it.fcstDate == dateStr }
+            if (dataForDay.isEmpty()) return@forEach
+
+            // 최고 강수확률
+            val popValues = dataForDay.filter { it.category == "POP" }.mapNotNull { it.fcstValue.toIntOrNull() }
+            val precipitationChance = popValues.maxOrNull() ?: 0
+
+            // 가장 나쁜 상태
+            val conditions = dataForDay.filter { it.category == "SKY" || it.category == "PTY" }
+                .groupBy { Pair(it.fcstDate, it.fcstTime) }
+                .map { (_, items) ->
+                    val sky = items.find { it.category == "SKY" }?.fcstValue?.toIntOrNull() ?: 1
+                    val pty = items.find { it.category == "PTY" }?.fcstValue?.toIntOrNull() ?: 0
+                    determineConditionPriority(sky, pty)
+                }
+
+            val worstCondition = conditions.maxByOrNull { it.priority }?.condition ?: "맑음"
+
+            // 최저기온과 최고기온 계산
+            val tmnValues =
+                dataForDay.filter { it.category == "TMN" }.mapNotNull { it.fcstValue.toDoubleOrNull()?.toInt() }
+            val tmxValues =
+                dataForDay.filter { it.category == "TMX" }.mapNotNull { it.fcstValue.toDoubleOrNull()?.toInt() }
+
+            val tmpValues =
+                dataForDay.filter { it.category == "TMP" }.mapNotNull { it.fcstValue.toDoubleOrNull()?.toInt() }
+
+            val minTemp = if (tmnValues.isNotEmpty()) tmnValues.minOrNull() ?: 0 else tmpValues.minOrNull() ?: 0
+            val maxTemp = if (tmxValues.isNotEmpty()) tmxValues.maxOrNull() ?: 0 else tmpValues.maxOrNull() ?: 0
+
+            // 주간 날씨 업데이트
+            val existingWeather = dailyWeatherRepository.findBySkiResortAndDDay(resort, dDay)
+            if (existingWeather != null) {
+                existingWeather.forecastDate = date
+                existingWeather.dayOfWeek = convertDayOfWeek(date.dayOfWeek.name)
+                existingWeather.precipitationChance = precipitationChance
+                existingWeather.condition = worstCondition
+                existingWeather.minTemp = minTemp
+                existingWeather.maxTemp = maxTemp
+                dailyWeatherRepository.save(existingWeather)
+            } else {
+                val dailyWeather = DailyWeather(
+                    skiResort = resort,
+                    forecastDate = date,
+                    dayOfWeek = convertDayOfWeek(date.dayOfWeek.name),
+                    dDay = dDay,
+                    precipitationChance = precipitationChance,
+                    maxTemp = maxTemp,
+                    minTemp = minTemp,
+                    condition = worstCondition
+                )
+                dailyWeatherRepository.save(dailyWeather)
+            }
+        }
+    }
+
+    data class ConditionPriority(val condition: String, val priority: Int)
+
+    private fun determineConditionPriority(sky: Int, pty: Int): ConditionPriority {
+        return when (pty) {
+            3 -> ConditionPriority("눈", 7)
+            2 -> ConditionPriority("비/눈", 6)
+            1 -> ConditionPriority("비", 5)
+            4 -> ConditionPriority("소나기", 4)
+            0 -> when (sky) {
+                4 -> ConditionPriority("흐림", 3)
+                3 -> ConditionPriority("구름많음", 2)
+                1 -> ConditionPriority("맑음", 1)
+                else -> ConditionPriority("맑음", 1)
+            }
+
+            else -> ConditionPriority("맑음", 1)
+        }
     }
 }

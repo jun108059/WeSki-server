@@ -12,14 +12,14 @@ data class DailyWeather(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    val forecastDate: LocalDate,
-    val dayOfWeek: String,
+    var forecastDate: LocalDate,
+    var dayOfWeek: String,
     val dDay: Int,
-    val precipitationChance: Int,
-    val maxTemp: Int,
-    val minTemp: Int,
+    var precipitationChance: Int,
+    var maxTemp: Int,
+    var minTemp: Int,
     @Column(name = "`condition`")
-    val condition: String,
+    var condition: String,
 
     @ManyToOne
     @JoinColumn(name = "resort_id")
