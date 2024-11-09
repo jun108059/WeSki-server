@@ -17,7 +17,7 @@ class WeatherScheduler(
         externalWeatherService.updateDailyWeather()
     }
 
-    @Scheduled(cron = "00 22 4 * * *")
+    @Scheduled(cron = "0 10 5 * * *")
     fun scheduledHourlyAndDailyUpdate() {
         externalWeatherService.updateHourlyAndDailyWeather()
     }
