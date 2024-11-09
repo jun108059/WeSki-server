@@ -55,7 +55,7 @@ data class HourlyWeatherDto(
     companion object {
         fun fromEntity(entity: HourlyWeather): HourlyWeatherDto {
             return HourlyWeatherDto(
-                time = entity.forecastTime.toLocalTimeString(),
+                time = entity.forecastTime,
                 temperature = entity.temperature,
                 precipitationChance = entity.precipitationChance.toPercentString(),
                 condition = entity.condition

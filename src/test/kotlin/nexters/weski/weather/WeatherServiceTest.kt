@@ -20,18 +20,16 @@ class WeatherServiceTest {
     fun `getWeatherByResortId should return WeatherDto`() {
         // Given
         val resortId = 1L
-        val skiResort = SkiResort(resortId, "스키장 A", ResortStatus.운영중, null, null, 5, 10)
+        val skiResort = SkiResort(
+            resortId, "스키장 A", ResortStatus.운영중, null, null, 5, 10,
+            "09:00 ~ 17:00", "18:00 ~ 22:00", "22:00 ~ 24:00", "06:00 ~ 09:00", "00:00 ~ 02:00",
+            "눈이 내리고 있습니다.", "37.123456", "127.123456", "123456", "123456"
+        )
         val currentWeather = CurrentWeather(
             resortId, -5, -2, -8, -10, "눈이 내리고 있습니다.", "눈", skiResort
         )
         every { currentWeatherRepository.findBySkiResortResortId(resortId) } returns currentWeather
-        every {
-            hourlyWeatherRepository.findAllBySkiResortResortIdAndForecastTimeBetween(
-                resortId,
-                any(),
-                any()
-            )
-        } returns listOf()
+        every { hourlyWeatherRepository.findAll() } returns listOf()
         every { dailyWeatherRepository.findAllBySkiResortResortId(resortId) } returns listOf()
 
         // When
