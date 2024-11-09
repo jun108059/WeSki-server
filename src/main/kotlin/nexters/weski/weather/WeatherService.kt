@@ -10,7 +10,7 @@ class WeatherService(
 ) {
     fun getWeatherByResortId(resortId: Long): WeatherDto? {
         val currentWeather = currentWeatherRepository.findBySkiResortResortId(resortId) ?: return null
-        val hourlyWeather = hourlyWeatherRepository.findAll()
+        val hourlyWeather = hourlyWeatherRepository.findBySkiResortResortId(resortId)
         val dailyWeather = dailyWeatherRepository.findAllBySkiResortResortId(resortId)
 
         return WeatherDto.fromEntities(currentWeather, hourlyWeather, dailyWeather)

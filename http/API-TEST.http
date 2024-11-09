@@ -21,3 +21,12 @@ POST http://localhost:8080/api/snow-maker/{{resortId}}/vote?isPositive=true
 
 ### 혼잡도 조회
 GET http://localhost:8080/api/congestion/{{resortId}}
+
+### 현재 날씨 Batch
+GET http://localhost:8080/batch/current-weather
+
+### 주간 날씨 Batch
+GET http://localhost:8080/batch/weekly-weather
+
+### 시간별 날씨 Batch
+GET http://localhost:8080/batch/hourly-weather
