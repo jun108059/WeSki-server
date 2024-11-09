@@ -34,6 +34,8 @@ data class SkiResort(
     val snowfallTime: String? = null,
     val xCoordinate: String,
     val yCoordinate: String,
+    val detailedAreaCode: String,
+    val broadAreaCode: String,
 
     @OneToMany(mappedBy = "skiResort")
     val slopes: List<Slope> = emptyList(),

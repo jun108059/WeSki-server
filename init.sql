@@ -11,22 +11,32 @@ DATABASE IF NOT EXISTS ski_db;
 USE
 ski_db;
 
+DROP TABLE IF EXISTS current_weather;
+DROP TABLE IF EXISTS daily_weather;
+DROP TABLE IF EXISTS hourly_weather;
+DROP TABLE IF EXISTS snow_quality_votes;
+DROP TABLE IF EXISTS webcams;
+DROP TABLE IF EXISTS slopes;
+DROP TABLE IF EXISTS ski_resorts;
+
 -- 스키장 정보 테이블
 CREATE TABLE ski_resorts
 (
     resort_id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `name`                       VARCHAR(255) NOT NULL,
+    `name`                     VARCHAR(255) NOT NULL,
     status                     VARCHAR(255) NOT NULL COMMENT '운영중, 운영종료, 예정',
     opening_date               DATE NULL,
     closing_date               DATE NULL,
     open_slopes                INT          NOT NULL DEFAULT 0,
     total_slopes               INT          NOT NULL DEFAULT 0,
-    day_operating_hours        VARCHAR(50) NULL,
-    night_operating_hours      VARCHAR(50) NULL,
-    late_night_operating_hours VARCHAR(50) NULL,
-    dawn_operating_hours       VARCHAR(50) NULL,
-    midnight_operating_hours   VARCHAR(50) NULL,
-    snowfall_time              VARCHAR(50) NULL,
+    day_operating_hours        VARCHAR(50) NULL COMMENT '주간 운영시간',
+    night_operating_hours      VARCHAR(50) NULL COMMENT '야간 운영시간',
+    late_night_operating_hours VARCHAR(50) NULL COMMENT '심야 운영시간',
+    dawn_operating_hours       VARCHAR(50) NULL COMMENT '새벽 운영시간',
+    midnight_operating_hours   VARCHAR(50) NULL COMMENT '자정 운영시간',
+    snowfall_time              VARCHAR(50) NULL COMMENT '정설 시간',
+    x_coordinate               VARCHAR(10)  NOT NULL COMMENT '위도 매핑 값',
+    y_coordinate               VARCHAR(10)  NOT NULL COMMENT '경도 매핑 값',
     created_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -34,14 +44,14 @@ CREATE TABLE ski_resorts
 -- 현재 날씨 테이블
 CREATE TABLE current_weather
 (
-    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    resort_id   BIGINT NOT NULL,
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    resort_id   BIGINT       NOT NULL UNIQUE,
     temperature INT          NOT NULL,
     max_temp    INT          NOT NULL,
     min_temp    INT          NOT NULL,
     feels_like  INT          NOT NULL,
     description VARCHAR(255) NOT NULL,
-    `condition`  VARCHAR(255)  NOT NULL COMMENT '맑음, 흐림, 흐리고 비, 비, 눈, 안개',
+    `condition` VARCHAR(255) NOT NULL COMMENT '맑음, 구름많음, 흐림, 비, 비/눈, 눈',
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (resort_id) REFERENCES ski_resorts (resort_id)
@@ -51,13 +61,13 @@ CREATE TABLE current_weather
 CREATE TABLE hourly_weather
 (
     id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    resort_id            BIGINT      NOT NULL,
-    forecast_time        DATETIME NOT NULL,
-    temperature          INT      NOT NULL,
-    precipitation_chance INT      NOT NULL,
-    `condition`  VARCHAR(255)  NOT NULL COMMENT '맑음, 흐림, 흐리고 비, 비, 눈, 안개',
-    created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    resort_id            BIGINT       NOT NULL,
+    forecast_time        DATETIME     NOT NULL,
+    temperature          INT          NOT NULL,
+    precipitation_chance INT          NOT NULL,
+    `condition`          VARCHAR(255) NOT NULL COMMENT '맑음, 흐림, 흐리고 비, 비, 눈, 안개',
+    created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (resort_id) REFERENCES ski_resorts (resort_id)
 );
 
@@ -65,15 +75,15 @@ CREATE TABLE hourly_weather
 CREATE TABLE daily_weather
 (
     id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    resort_id            BIGINT         NOT NULL,
-    forecast_date        DATE        NOT NULL,
-    day_of_week          VARCHAR(10) NOT NULL,
-    precipitation_chance INT         NOT NULL,
-    max_temp             INT         NOT NULL,
-    min_temp             INT         NOT NULL,
-    `condition`  VARCHAR(255)  NOT NULL COMMENT '맑음, 흐림, 흐리고 비, 비, 눈, 안개',
-    created_at           DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at           DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    resort_id            BIGINT       NOT NULL,
+    forecast_date        DATE         NOT NULL,
+    day_of_week          VARCHAR(10)  NOT NULL,
+    precipitation_chance INT          NOT NULL,
+    max_temp             INT          NOT NULL,
+    min_temp             INT          NOT NULL,
+    `condition`          VARCHAR(255) NOT NULL COMMENT '맑음, 흐림, 흐리고 비, 비, 눈, 안개',
+    created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (resort_id) REFERENCES ski_resorts (resort_id)
 );
 
@@ -81,7 +91,7 @@ CREATE TABLE daily_weather
 CREATE TABLE snow_quality_votes
 (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    resort_id   BIGINT      NOT NULL,
+    resort_id   BIGINT   NOT NULL,
     is_positive BOOLEAN  NOT NULL,
     voted_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -93,8 +103,8 @@ CREATE TABLE snow_quality_votes
 CREATE TABLE slopes
 (
     id                      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    resort_id               BIGINT          NOT NULL,
-    `name`                    VARCHAR(255) NOT NULL,
+    resort_id               BIGINT       NOT NULL,
+    `name`                  VARCHAR(255) NOT NULL,
     webcam_number           INT NULL,
     difficulty              VARCHAR(255) NOT NULL COMMENT '초급, 중급, 중상급, 최상급, 파크',
     is_day_operating        BOOLEAN               DEFAULT FALSE,
@@ -111,28 +121,42 @@ CREATE TABLE slopes
 CREATE TABLE webcams
 (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    resort_id   BIGINT          NOT NULL,
-    `name`        VARCHAR(255) NULL,
-    number      INT          NULL,
+    resort_id   BIGINT   NOT NULL,
+    `name`      VARCHAR(255) NULL,
+    number      INT NULL,
     description VARCHAR(255) NULL,
     url         VARCHAR(255) NULL,
-    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (resort_id) REFERENCES ski_resorts (resort_id)
 );
 
-INSERT INTO ski_resorts (`name`, status, opening_date, day_operating_hours, night_operating_hours, snowfall_time)
-VALUES ('지산 리조트', '운영중', NULL, NULL, NULL, NULL),
-       ('곤지암 스키장', '운영중', NULL, NULL, NULL, NULL),
-       ('비발디파크', '운영중', NULL, '08:30~16:30', '18:30~22:30', '16:30~18:30'),
-       ('엘리시안 강촌', '예정', STR_TO_DATE('24.12.06', '%y.%m.%d'), '09:00~17:00', '18:30~24:00', '17:00~18:30'),
-       ('웰리힐리파크', '예정', STR_TO_DATE('24.11.30', '%y.%m.%d'), '09:00~16:30', '18:30~22:30', '16:30~18:30'),
-       ('휘닉스파크', '운영중', NULL, NULL, NULL, '14:30~18:00'),
-       ('하이윈 스키장', '예정', STR_TO_DATE('24.12.06', '%y.%m.%d'), '09:00~16:00', '18:00~22:00', '16:00~18:00'),
-       ('용평스키장 모나', '예정', STR_TO_DATE('24.11.29', '%y.%m.%d'), '09:00~17:00', '19:00~22:00', '17:00~19:00'),
-       ('무주덕유산', '운영중', NULL, '07:00~16:00', '18:00~21:00', '16:30~18:30'),
-       ('에덴벨리(양산)', '운영중', NULL, NULL, NULL, '17:30~19:00'),
-       ('오투리조트', '예정', STR_TO_DATE('24.11.29', '%y.%m.%d'), '09:30~16:30', '18:00~21:30', '16:30~18:00');
+-- 스키장 정보
+INSERT INTO ski_resorts (`name`, status, opening_date, closing_date, open_slopes, total_slopes, day_operating_hours,
+                         night_operating_hours, late_night_operating_hours, dawn_operating_hours,
+                         midnight_operating_hours, snowfall_time, x_coordinate, y_coordinate)
+VALUES ('지산 리조트', '운영중', STR_TO_DATE('2024.12.04', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, '69',
+        '119'),
+       ('곤지암 스키장', '운영중', STR_TO_DATE('2024.12.03', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, '69',
+        '119'),
+       ('비발디파크', '운영중', STR_TO_DATE('2024.11.25', '%Y.%m.%d'), NULL, 0, 0, '08:30~16:30', '18:30~22:30', NULL, NULL,
+        NULL, '16:30~18:30', '72', '129'),
+       ('엘리시안 강촌', '예정', STR_TO_DATE('2024.11.30', '%Y.%m.%d'), NULL, 0, 0, '09:00~17:00', '18:30~24:00', '18:30~03:00',
+        NULL, NULL, '17:00~18:30', '71', '132'),
+       ('웰리힐리파크', '예정', STR_TO_DATE('2024.11.30', '%Y.%m.%d'), NULL, 0, 0, '09:00~16:30', '18:30~22:30', '22:30~24:00',
+        NULL, NULL, '16:30~18:30', '81', '126'),
+       ('휘닉스파크', '운영중', STR_TO_DATE('2024.11.22', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, '14:30~18:00',
+        '84', '128'),
+       ('하이원 스키장', '예정', STR_TO_DATE('2024.12.06', '%Y.%m.%d'), NULL, 0, 0, '09:00~16:00', '18:00~22:00', NULL, NULL,
+        NULL, '16:00~18:00', '92', '120'),
+       ('용평스키장 모나', '예정', STR_TO_DATE('2024.11.22', '%Y.%m.%d'), NULL, 0, 0, '09:00~17:00', '19:00~22:00', NULL, NULL,
+        NULL, '17:00~19:00', '89', '130'),
+       ('무주덕유산', '운영중', STR_TO_DATE('2024.12.06', '%Y.%m.%d'), NULL, 0, 0, '07:00~16:00', '18:00~21:00', NULL, NULL,
+        NULL, '16:30~18:30', '75', '93'),
+       ('에덴벨리(양산)', '운영중', STR_TO_DATE('2024.11.23', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL,
+        '17:30~19:00', '95', '80'),
+       ('오투리조트', '예정', STR_TO_DATE('2024.11.29', '%Y.%m.%d'), NULL, 0, 0, '09:30~16:30', '18:00~21:30', NULL, NULL,
+        NULL, '16:30~18:00', '95', '119');
 
 -- 하이윈 스키장 슬로프 정보 (resort_id = 7)
 INSERT INTO slopes (resort_id, `name`, difficulty, is_day_operating, is_night_operating, is_late_night_operating,
@@ -483,14 +507,14 @@ VALUES (1, CURDATE(), '월요일', 10, 5, -2, '맑음'),
        (11, CURDATE() + INTERVAL 2 DAY, '수요일', 38, -7, -14, '흐림');
 
 INSERT INTO hourly_weather (resort_id, forecast_time, temperature, precipitation_chance, `condition`)
-VALUES
-    (1, '2024-10-04 08:00:00', -2, 20, '맑음'),
-    (1, '2024-10-04 10:00:00', 0, 30, '흐림'),
-    (1, '2024-10-04 12:00:00', 2, 40, '흐리고 비'),
-    (1, '2024-10-04 14:00:00', 0, 50, '비'),
-    (1, '2024-10-04 16:00:00', -2, 60, '눈'),
-    (1, '2024-10-04 18:00:00', -4, 70, '눈'),
-    (1, '2024-10-04 20:00:00', -6, 80, '흐림'),
-    (1, '2024-10-04 22:00:00', -8, 90, '안개'),
-    (1, '2024-10-05 00:00:00', -10, 80, '맑음'),
-    (1, '2024-10-05 02:00:00', -12, 70, '맑음');
+VALUES (1, '2024-10-04 08:00:00', -2, 20, '맑음'),
+       (1, '2024-10-04 10:00:00', 0, 30, '흐림'),
+       (1, '2024-10-04 12:00:00', 2, 40, '흐리고 비'),
+       (1, '2024-10-04 14:00:00', 0, 50, '비'),
+       (1, '2024-10-04 16:00:00', -2, 60, '눈'),
+       (1, '2024-10-04 18:00:00', -4, 70, '눈'),
+       (1, '2024-10-04 20:00:00', -6, 80, '흐림'),
+       (1, '2024-10-04 22:00:00', -8, 90, '안개'),
+       (1, '2024-10-05 00:00:00', -10, 80, '맑음'),
+       (1, '2024-10-05 02:00:00', -12, 70, '맑음');
+
