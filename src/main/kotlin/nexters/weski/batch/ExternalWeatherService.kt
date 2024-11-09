@@ -1,14 +1,18 @@
 package nexters.weski.batch
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import jakarta.transaction.Transactional
 import nexters.weski.ski_resort.SkiResort
 import nexters.weski.ski_resort.SkiResortRepository
 import nexters.weski.weather.CurrentWeather
 import nexters.weski.weather.CurrentWeatherRepository
+import nexters.weski.weather.DailyWeather
+import nexters.weski.weather.DailyWeatherRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.pow
@@ -16,6 +20,7 @@ import kotlin.math.pow
 @Service
 class ExternalWeatherService(
     private val currentWeatherRepository: CurrentWeatherRepository,
+    private val dailyWeatherRepository: DailyWeatherRepository,
     private val skiResortRepository: SkiResortRepository
 ) {
     @Value("\${weather.api.key}")
@@ -149,5 +154,195 @@ class ExternalWeatherService(
         }
 
         return "$prefix $postfix"
+    }
+
+    @Transactional
+    fun updateDailyWeather() {
+        val baseDateTime = getBaseDateTime()
+        val baseDate = baseDateTime.first
+        val baseTime = baseDateTime.second
+
+        val tmFc = baseDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + baseTime
+        // 기존 데이터 삭제
+        dailyWeatherRepository.deleteByDDayGreaterThanEqual(2)
+        skiResortRepository.findAll().forEach { resort ->
+            val detailedAreaCode = resort.detailedAreaCode
+            val broadAreaCode = resort.broadAreaCode
+
+            // 첫 번째 API 호출 (중기 기온 예보)
+            val midTaUrl = buildMidTaUrl(detailedAreaCode, tmFc)
+            val midTaResponse = restTemplate.getForObject(midTaUrl, String::class.java)
+            val midTaData = parseMidTaResponse(midTaResponse)
+
+            // 두 번째 API 호출 (중기 육상 예보)
+            val midLandUrl = buildMidLandUrl(broadAreaCode, tmFc)
+            val midLandResponse = restTemplate.getForObject(midLandUrl, String::class.java)
+            val midLandData = parseMidLandResponse(midLandResponse)
+
+            // 데이터 병합 및 처리
+            val dailyWeathers = mergeWeatherData(resort, midTaData, midLandData)
+            dailyWeatherRepository.saveAll(dailyWeathers)
+        }
+    }
+
+    private fun getBaseDateTime(): Pair<LocalDate, String> {
+        // 어제 날짜
+        val yesterday = LocalDate.now().minusDays(1)
+        val hour = 18 // 18시 기준
+        return Pair(yesterday, String.format("%02d00", hour))
+    }
+
+    private fun buildMidTaUrl(areaCode: String, tmFc: String): String {
+        return "https://apis.data.go.kr/1360000/MidFcstInfoService/getMidTa" +
+                "?serviceKey=$apiKey" +
+                "&pageNo=1" +
+                "&numOfRows=10" +
+                "&dataType=JSON" +
+                "&regId=$areaCode" +
+                "&tmFc=$tmFc"
+    }
+
+    private fun buildMidLandUrl(regId: String, tmFc: String): String {
+        return "https://apis.data.go.kr/1360000/MidFcstInfoService/getMidLandFcst" +
+                "?serviceKey=$apiKey" +
+                "&pageNo=1" +
+                "&numOfRows=10" +
+                "&dataType=JSON" +
+                "&regId=$regId" +
+                "&tmFc=$tmFc"
+    }
+
+    private fun parseMidTaResponse(response: String?): JsonNode? {
+        response ?: return null
+        val rootNode = objectMapper.readTree(response)
+        return rootNode["response"]["body"]["items"]["item"]?.get(0)
+    }
+
+    private fun parseMidLandResponse(response: String?): JsonNode? {
+        response ?: return null
+        val rootNode = objectMapper.readTree(response)
+        return rootNode["response"]["body"]["items"]["item"]?.get(0)
+    }
+
+    private fun mergeWeatherData(
+        resort: SkiResort,
+        midTaData: JsonNode?,
+        midLandData: JsonNode?
+    ): List<DailyWeather> {
+        val weatherList = mutableListOf<DailyWeather>()
+        val now = LocalDate.now()
+
+        if (midTaData == null || midLandData == null) {
+            return weatherList
+        }
+
+        for (i in 3..10) {
+            val forecastDate = now.plusDays(i.toLong() - 1)
+            val dayOfWeek = forecastDate.dayOfWeek.name // 영어 요일명
+
+            val maxTemp = midTaData.get("taMax$i")?.asInt() ?: continue
+            val minTemp = midTaData.get("taMin$i")?.asInt() ?: continue
+
+            val precipitationChance = getPrecipitationChance(midLandData, i)
+            val condition = getCondition(midLandData, i)
+
+            val dailyWeather = DailyWeather(
+                skiResort = resort,
+                forecastDate = forecastDate,
+                dayOfWeek = convertDayOfWeek(dayOfWeek),
+                dDay = i - 1,
+                precipitationChance = precipitationChance,
+                maxTemp = maxTemp,
+                minTemp = minTemp,
+                condition = condition
+            )
+            weatherList.add(dailyWeather)
+        }
+
+        return weatherList
+    }
+
+    private fun getPrecipitationChance(midLandData: JsonNode, day: Int): Int {
+        return when (day) {
+            in 3..7 -> {
+                val amChance = midLandData.get("rnSt${day}Am")?.asInt() ?: 0
+                val pmChance = midLandData.get("rnSt${day}Pm")?.asInt() ?: 0
+                maxOf(amChance, pmChance)
+            }
+
+            in 8..10 -> {
+                midLandData.get("rnSt$day")?.asInt() ?: 0
+            }
+
+            else -> 0
+        }
+    }
+
+    private fun getCondition(midLandData: JsonNode, day: Int): String {
+        return when (day) {
+            in 3..7 -> {
+                val amCondition = midLandData.get("wf${day}Am")?.asText() ?: ""
+                val pmCondition = midLandData.get("wf${day}Pm")?.asText() ?: ""
+                selectWorseCondition(amCondition, pmCondition)
+            }
+
+            in 8..10 -> {
+                midLandData.get("wf$day")?.asText() ?: ""
+            }
+
+            else -> "알 수 없음"
+        }
+    }
+
+    private fun selectWorseCondition(am: String, pm: String): String {
+        val conditionPriority = listOf(
+            "맑음",
+            "구름많음",
+            "흐림",
+            "구름많고 소나기",
+            "구름많고 비",
+            "구름많고 비/눈",
+            "흐리고 비",
+            "흐리고 소나기",
+            "소나기",
+            "비",
+            "비/눈",
+            "흐리고 눈",
+            "흐리고 비/눈",
+            "눈"
+        )
+        val amIndex = conditionPriority.indexOf(am)
+        val pmIndex = conditionPriority.indexOf(pm)
+
+        return if (amIndex == -1 && pmIndex == -1) {
+            "맑음"
+        } else if (amIndex == -1) {
+            pm
+        } else if (pmIndex == -1) {
+            am
+        } else {
+            if (amIndex > pmIndex) am else pm
+        }
+    }
+
+    private fun convertDayOfWeek(englishDay: String): String {
+        return when (englishDay) {
+            "MONDAY" -> "월요일"
+            "TUESDAY" -> "화요일"
+            "WEDNESDAY" -> "수요일"
+            "THURSDAY" -> "목요일"
+            "FRIDAY" -> "금요일"
+            "SATURDAY" -> "토요일"
+            "SUNDAY" -> "일요일"
+            else -> "ERROR"
+        }
+    }
+
+    @Transactional
+    fun updateDDayValues() {
+        // d_day 값이 0인 데이터 삭제
+        dailyWeatherRepository.deleteByDDay(0)
+        // 나머지 데이터의 d_day 값을 1씩 감소
+        dailyWeatherRepository.decrementDDayValues()
     }
 }

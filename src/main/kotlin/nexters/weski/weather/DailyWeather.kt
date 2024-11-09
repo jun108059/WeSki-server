@@ -14,9 +14,11 @@ data class DailyWeather(
 
     val forecastDate: LocalDate,
     val dayOfWeek: String,
+    val dDay: Int,
     val precipitationChance: Int,
     val maxTemp: Int,
     val minTemp: Int,
+    @Column(name = "`condition`")
     val condition: String,
 
     @ManyToOne
