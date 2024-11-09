@@ -37,6 +37,8 @@ CREATE TABLE ski_resorts
     snowfall_time              VARCHAR(50) NULL COMMENT '정설 시간',
     x_coordinate               VARCHAR(10)  NOT NULL COMMENT '위도 매핑 값',
     y_coordinate               VARCHAR(10)  NOT NULL COMMENT '경도 매핑 값',
+    detailed_area_code         VARCHAR(10) NULL COMMENT '예보 구역 코드(기온 예보에 사용)',
+    broad_area_code            VARCHAR(10) NULL COMMENT '광역 지역 코드(육상 예보에 사용)',
     created_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -78,7 +80,8 @@ CREATE TABLE daily_weather
     resort_id            BIGINT       NOT NULL,
     forecast_date        DATE         NOT NULL,
     day_of_week          VARCHAR(10)  NOT NULL,
-    precipitation_chance INT          NOT NULL,
+    d_day                INT          NOT NULL COMMENT '오늘(0), 내일(1), 모레(2)',
+    precipitation_chance INT          NOT NULL COMMENT '강수확률',
     max_temp             INT          NOT NULL,
     min_temp             INT          NOT NULL,
     `condition`          VARCHAR(255) NOT NULL COMMENT '맑음, 흐림, 흐리고 비, 비, 눈, 안개',
@@ -134,29 +137,30 @@ CREATE TABLE webcams
 -- 스키장 정보
 INSERT INTO ski_resorts (`name`, status, opening_date, closing_date, open_slopes, total_slopes, day_operating_hours,
                          night_operating_hours, late_night_operating_hours, dawn_operating_hours,
-                         midnight_operating_hours, snowfall_time, x_coordinate, y_coordinate)
-VALUES ('지산 리조트', '운영중', STR_TO_DATE('2024.12.04', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, '69',
-        '119'),
-       ('곤지암 스키장', '운영중', STR_TO_DATE('2024.12.03', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, '69',
-        '119'),
-       ('비발디파크', '운영중', STR_TO_DATE('2024.11.25', '%Y.%m.%d'), NULL, 0, 0, '08:30~16:30', '18:30~22:30', NULL, NULL,
-        NULL, '16:30~18:30', '72', '129'),
+                         midnight_operating_hours, snowfall_time, x_coordinate, y_coordinate, detailed_area_code,
+                         broad_area_code)
+VALUES ('지산 리조트', '예정', STR_TO_DATE('2024.12.04', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, '69',
+        '119', '11B20701', '11B00000'),
+       ('곤지암 스키장', '예정', STR_TO_DATE('2024.12.03', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, '69',
+        '119', '11B20702', '11B00000'),
+       ('비발디파크', '예정', STR_TO_DATE('2024.11.25', '%Y.%m.%d'), NULL, 0, 0, '08:30~16:30', '18:30~22:30', NULL, NULL,
+        NULL, '16:30~18:30', '72', '129', '11D10302', '11D10000'),
        ('엘리시안 강촌', '예정', STR_TO_DATE('2024.11.30', '%Y.%m.%d'), NULL, 0, 0, '09:00~17:00', '18:30~24:00', '18:30~03:00',
-        NULL, NULL, '17:00~18:30', '71', '132'),
+        NULL, NULL, '17:00~18:30', '71', '132', '11D10301', '11D10000'),
        ('웰리힐리파크', '예정', STR_TO_DATE('2024.11.30', '%Y.%m.%d'), NULL, 0, 0, '09:00~16:30', '18:30~22:30', '22:30~24:00',
-        NULL, NULL, '16:30~18:30', '81', '126'),
-       ('휘닉스파크', '운영중', STR_TO_DATE('2024.11.22', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, '14:30~18:00',
-        '84', '128'),
+        NULL, NULL, '16:30~18:30', '81', '126', '11D10402', '11D10000'),
+       ('휘닉스파크', '예정', STR_TO_DATE('2024.11.22', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, '14:30~18:00',
+        '84', '128', '11D10503', '11D10000'),
        ('하이원 스키장', '예정', STR_TO_DATE('2024.12.06', '%Y.%m.%d'), NULL, 0, 0, '09:00~16:00', '18:00~22:00', NULL, NULL,
-        NULL, '16:00~18:00', '92', '120'),
+        NULL, '16:00~18:00', '92', '120', '11D10502', '11D10000'),
        ('용평스키장 모나', '예정', STR_TO_DATE('2024.11.22', '%Y.%m.%d'), NULL, 0, 0, '09:00~17:00', '19:00~22:00', NULL, NULL,
-        NULL, '17:00~19:00', '89', '130'),
-       ('무주덕유산', '운영중', STR_TO_DATE('2024.12.06', '%Y.%m.%d'), NULL, 0, 0, '07:00~16:00', '18:00~21:00', NULL, NULL,
-        NULL, '16:30~18:30', '75', '93'),
-       ('에덴벨리(양산)', '운영중', STR_TO_DATE('2024.11.23', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL,
-        '17:30~19:00', '95', '80'),
+        NULL, '17:00~19:00', '89', '130', '11D20201', '11D20000'),
+       ('무주덕유산', '예정', STR_TO_DATE('2024.12.06', '%Y.%m.%d'), NULL, 0, 0, '07:00~16:00', '18:00~21:00', NULL, NULL,
+        NULL, '16:30~18:30', '75', '93', '11F10302', '11F10000'),
+       ('에덴벨리(양산)', '예정', STR_TO_DATE('2024.11.23', '%Y.%m.%d'), NULL, 0, 0, NULL, NULL, NULL, NULL, NULL,
+        '17:30~19:00', '95', '80', '11H20102', '11H20000'),
        ('오투리조트', '예정', STR_TO_DATE('2024.11.29', '%Y.%m.%d'), NULL, 0, 0, '09:30~16:30', '18:00~21:30', NULL, NULL,
-        NULL, '16:30~18:00', '95', '119');
+        NULL, '16:30~18:00', '95', '119', '11D20301', '11D20000');
 
 -- 하이윈 스키장 슬로프 정보 (resort_id = 7)
 INSERT INTO slopes (resort_id, `name`, difficulty, is_day_operating, is_night_operating, is_late_night_operating,
@@ -461,50 +465,50 @@ VALUES (1, 3, 5, -2, 0, '맑은 날씨', '맑음'),
 
 -- 주간 날씨 정보 insert
 INSERT INTO daily_weather (resort_id, forecast_date, day_of_week, precipitation_chance, max_temp, min_temp,
-                           `condition`)
-VALUES (1, CURDATE(), '월요일', 10, 5, -2, '맑음'),
-       (1, CURDATE() + INTERVAL 1 DAY, '화요일', 20, 6, -1, '흐림'),
-       (1, CURDATE() + INTERVAL 2 DAY, '수요일', 30, 4, -3, '흐리고 비'),
+                           `condition`, d_day)
+VALUES (1, CURDATE(), '월요일', 10, 5, -2, '맑음', 0),
+       (1, CURDATE() + INTERVAL 1 DAY, '화요일', 20, 6, -1, '흐림', 1),
+       (1, CURDATE() + INTERVAL 2 DAY, '수요일', 30, 4, -3, '흐리고 비', 2),
 
-       (2, CURDATE(), '월요일', 15, 4, -3, '흐림'),
-       (2, CURDATE() + INTERVAL 1 DAY, '화요일', 25, 5, -2, '흐리고 비'),
-       (2, CURDATE() + INTERVAL 2 DAY, '수요일', 35, 3, -4, '눈'),
+       (2, CURDATE(), '월요일', 15, 4, -3, '흐림', 0),
+       (2, CURDATE() + INTERVAL 1 DAY, '화요일', 25, 5, -2, '흐리고 비', 1),
+       (2, CURDATE() + INTERVAL 2 DAY, '수요일', 35, 3, -4, '눈', 2),
 
-       (3, CURDATE(), '월요일', 20, 3, -4, '눈'),
-       (3, CURDATE() + INTERVAL 1 DAY, '화요일', 30, 2, -5, '비'),
-       (3, CURDATE() + INTERVAL 2 DAY, '수요일', 40, 1, -6, '흐림'),
+       (3, CURDATE(), '월요일', 20, 3, -4, '눈', 0),
+       (3, CURDATE() + INTERVAL 1 DAY, '화요일', 30, 2, -5, '비', 1),
+       (3, CURDATE() + INTERVAL 2 DAY, '수요일', 40, 1, -6, '흐림', 2),
 
-       (4, CURDATE(), '월요일', 5, 2, -5, '맑음'),
-       (4, CURDATE() + INTERVAL 1 DAY, '화요일', 10, 1, -6, '맑음'),
-       (4, CURDATE() + INTERVAL 2 DAY, '수요일', 15, 0, -7, '흐림'),
+       (4, CURDATE(), '월요일', 5, 2, -5, '맑음', 0),
+       (4, CURDATE() + INTERVAL 1 DAY, '화요일', 10, 1, -6, '맑음', 1),
+       (4, CURDATE() + INTERVAL 2 DAY, '수요일', 15, 0, -7, '흐림', 2),
 
-       (5, CURDATE(), '월요일', 12, 1, -6, '흐림'),
-       (5, CURDATE() + INTERVAL 1 DAY, '화요일', 22, 0, -7, '비'),
-       (5, CURDATE() + INTERVAL 2 DAY, '수요일', 32, -1, -8, '안개'),
+       (5, CURDATE(), '월요일', 12, 1, -6, '흐림', 0),
+       (5, CURDATE() + INTERVAL 1 DAY, '화요일', 22, 0, -7, '비', 1),
+       (5, CURDATE() + INTERVAL 2 DAY, '수요일', 32, -1, -8, '안개', 2),
 
-       (6, CURDATE(), '월요일', 18, 0, -7, '맑음'),
-       (6, CURDATE() + INTERVAL 1 DAY, '화요일', 28, -1, -8, '맑음'),
-       (6, CURDATE() + INTERVAL 2 DAY, '수요일', 38, -2, -9, '흐림'),
+       (6, CURDATE(), '월요일', 18, 0, -7, '맑음', 0),
+       (6, CURDATE() + INTERVAL 1 DAY, '화요일', 28, -1, -8, '맑음', 1),
+       (6, CURDATE() + INTERVAL 2 DAY, '수요일', 38, -2, -9, '흐림', 2),
 
-       (7, CURDATE(), '월요일', 25, -1, -8, '눈'),
-       (7, CURDATE() + INTERVAL 1 DAY, '화요일', 35, -2, -9, '비'),
-       (7, CURDATE() + INTERVAL 2 DAY, '수요일', 45, -3, -10, '눈'),
+       (7, CURDATE(), '월요일', 25, -1, -8, '눈', 0),
+       (7, CURDATE() + INTERVAL 1 DAY, '화요일', 35, -2, -9, '비', 1),
+       (7, CURDATE() + INTERVAL 2 DAY, '수요일', 45, -3, -10, '눈', 2),
 
-       (8, CURDATE(), '월요일', 8, -2, -9, '맑음'),
-       (8, CURDATE() + INTERVAL 1 DAY, '화요일', 18, -3, -10, '맑음'),
-       (8, CURDATE() + INTERVAL 2 DAY, '수요일', 28, -4, -11, '흐림'),
+       (8, CURDATE(), '월요일', 8, -2, -9, '맑음', 0),
+       (8, CURDATE() + INTERVAL 1 DAY, '화요일', 18, -3, -10, '맑음', 1),
+       (8, CURDATE() + INTERVAL 2 DAY, '수요일', 28, -4, -11, '흐림', 2),
 
-       (9, CURDATE(), '월요일', 22, -3, -10, '흐림'),
-       (9, CURDATE() + INTERVAL 1 DAY, '화요일', 32, -4, -11, '흐리고 비'),
-       (9, CURDATE() + INTERVAL 2 DAY, '수요일', 42, -5, -12, '눈'),
+       (9, CURDATE(), '월요일', 22, -3, -10, '흐림', 0),
+       (9, CURDATE() + INTERVAL 1 DAY, '화요일', 32, -4, -11, '흐리고 비', 1),
+       (9, CURDATE() + INTERVAL 2 DAY, '수요일', 42, -5, -12, '눈', 2),
 
-       (10, CURDATE(), '월요일', 15, -4, -11, '맑음'),
-       (10, CURDATE() + INTERVAL 1 DAY, '화요일', 25, -5, -12, '맑음'),
-       (10, CURDATE() + INTERVAL 2 DAY, '수요일', 35, -6, -13, '흐림'),
+       (10, CURDATE(), '월요일', 15, -4, -11, '맑음', 0),
+       (10, CURDATE() + INTERVAL 1 DAY, '화요일', 25, -5, -12, '맑음', 1),
+       (10, CURDATE() + INTERVAL 2 DAY, '수요일', 35, -6, -13, '흐림', 2),
 
-       (11, CURDATE(), '월요일', 18, -5, -12, '안개'),
-       (11, CURDATE() + INTERVAL 1 DAY, '화요일', 28, -6, -13, '안개'),
-       (11, CURDATE() + INTERVAL 2 DAY, '수요일', 38, -7, -14, '흐림');
+       (11, CURDATE(), '월요일', 18, -5, -12, '안개', 0),
+       (11, CURDATE() + INTERVAL 1 DAY, '화요일', 28, -6, -13, '안개', 1),
+       (11, CURDATE() + INTERVAL 2 DAY, '수요일', 38, -7, -14, '흐림', 2);
 
 INSERT INTO hourly_weather (resort_id, forecast_time, temperature, precipitation_chance, `condition`)
 VALUES (1, '2024-10-04 08:00:00', -2, 20, '맑음'),
