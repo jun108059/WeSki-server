@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import nexters.weski.common.BaseEntity
 import nexters.weski.slope.Slope
 import nexters.weski.webcam.Webcam
+import java.time.LocalDate
 
 @Entity
 @Table(name = "ski_resorts")
@@ -17,9 +18,9 @@ data class SkiResort(
     @Enumerated(EnumType.STRING)
     val status: ResortStatus,
 
-    val openingDate: java.time.LocalDate? = null,
+    val openingDate: LocalDate? = null,
 
-    val closingDate: java.time.LocalDate? = null,
+    val closingDate: LocalDate? = null,
 
     val openSlopes: Int = 0,
 
@@ -30,6 +31,9 @@ data class SkiResort(
     val lateNightOperatingHours: String? = null,
     val dawnOperatingHours: String? = null,
     val midnightOperatingHours: String? = null,
+    val snowfallTime: String? = null,
+    val xCoordinate: String,
+    val yCoordinate: String,
 
     @OneToMany(mappedBy = "skiResort")
     val slopes: List<Slope> = emptyList(),

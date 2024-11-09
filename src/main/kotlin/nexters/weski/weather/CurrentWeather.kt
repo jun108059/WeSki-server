@@ -7,18 +7,19 @@ import nexters.weski.ski_resort.SkiResort
 @Entity
 @Table(name = "current_weather")
 data class CurrentWeather(
-    @Id
-    val resortId: Long,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0,
 
     val temperature: Int,
     val maxTemp: Int,
     val minTemp: Int,
     val feelsLike: Int,
     val description: String,
+
+    @Column(name = "`condition`")
     val condition: String,
 
     @OneToOne
-    @MapsId
-    @JoinColumn(name = "resort_id")
+    @JoinColumn(name = "resort_id", unique = true)
     val skiResort: SkiResort
 ) : BaseEntity()
