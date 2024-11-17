@@ -29,8 +29,13 @@ class ExternalWeatherService(
 
     @Transactional
     fun updateCurrentWeather() {
-        val baseDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
         val baseTime = getBaseTime()
+        val baseLocalDateTime = if (baseTime == "2300") {
+            LocalDateTime.now().minusDays(1)
+        } else {
+            LocalDateTime.now()
+        }
+        val baseDate = baseLocalDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
         skiResortRepository.findAll().forEach { resort ->
             val url = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst" +
                     "?serviceKey=$apiKey" +
@@ -62,6 +67,9 @@ class ExternalWeatherService(
     private fun getBaseTime(): String {
         val now = LocalDateTime.now().minusHours(1)
         val hour = now.hour.toString().padStart(2, '0')
+        if (hour == "23") {
+            return "0000"
+        }
         return "${hour}00"
     }
 
@@ -91,11 +99,21 @@ class ExternalWeatherService(
         val feelsLike = calculateFeelsLike(temperature, windSpeed)
         val condition = determineCondition(data)
         val description = generateDescription(condition, temperature)
-
+        val dailyWeather = dailyWeatherRepository.findBySkiResortAndForecastDate(resort, LocalDate.now())[0]
+        // dailyWeather.maxTemp보다 temperature이 높으면 maxTemp를 업데이트
+        if (temperature > dailyWeather.maxTemp) {
+            dailyWeather.maxTemp = temperature
+            dailyWeatherRepository.save(dailyWeather)
+        }
+        // dailyWeather.minTemp보다 temperature이 낮으면 minTemp을 업데이트
+        if (temperature < dailyWeather.minTemp) {
+            dailyWeather.minTemp = temperature
+            dailyWeatherRepository.save(dailyWeather)
+        }
         return CurrentWeather(
             temperature = temperature,
-            maxTemp = data["TMX"]?.toDoubleOrNull()?.toInt() ?: temperature,
-            minTemp = data["TMN"]?.toDoubleOrNull()?.toInt() ?: temperature,
+            maxTemp = dailyWeather.maxTemp,
+            minTemp = dailyWeather.minTemp,
             feelsLike = feelsLike,
             condition = condition,
             description = description,
