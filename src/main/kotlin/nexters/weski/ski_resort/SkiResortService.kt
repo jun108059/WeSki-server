@@ -11,7 +11,7 @@ class SkiResortService(
     private val dailyWeatherRepository: DailyWeatherRepository
 ) {
     fun getAllSkiResortsAndWeather(): List<SkiResortResponseDto> {
-        val skiResorts = skiResortRepository.findAll()
+        val skiResorts = skiResortRepository.findAllByOrderByOpeningDateAsc()
         return skiResorts.map { skiResort ->
             val currentWeather = currentWeatherRepository.findBySkiResortResortId(skiResort.resortId)
             val weeklyWeather = dailyWeatherRepository.findAllBySkiResortResortId(skiResort.resortId)
