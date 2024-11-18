@@ -29,7 +29,7 @@ class WeatherServiceTest {
             resortId, -5, -2, -8, -10, "눈이 내리고 있습니다.", "눈", skiResort
         )
         every { currentWeatherRepository.findBySkiResortResortId(resortId) } returns currentWeather
-        every { hourlyWeatherRepository.findAll() } returns listOf()
+        every { hourlyWeatherRepository.findBySkiResortResortId(resortId) } returns listOf()
         every { dailyWeatherRepository.findAllBySkiResortResortId(resortId) } returns listOf()
 
         // When
