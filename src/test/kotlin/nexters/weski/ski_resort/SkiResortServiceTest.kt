@@ -22,10 +22,34 @@ class SkiResortServiceTest {
     fun `getAllSkiResorts should return list of SkiResortDto`() {
         // Given
         val skiResorts = listOf(
-            SkiResort(1, "스키장 A", ResortStatus.운영중, null, null, 5, 10),
-            SkiResort(2, "스키장 B", ResortStatus.예정, null, null, 0, 8)
+            SkiResort(
+                resortId = 1,
+                name = "스키장 A",
+                status = ResortStatus.운영중,
+                openingDate = null,
+                closingDate = null,
+                openSlopes = 3,
+                totalSlopes = 8,
+                xCoordinate = "12.0",
+                yCoordinate = "34.0",
+                detailedAreaCode = "11D20201",
+                broadAreaCode = "11D20000"
+            ),
+            SkiResort(
+                resortId = 2,
+                name = "스키장 B",
+                status = ResortStatus.운영중,
+                openingDate = null,
+                closingDate = null,
+                openSlopes = 3,
+                totalSlopes = 8,
+                xCoordinate = "12.0",
+                yCoordinate = "34.0",
+                detailedAreaCode = "11D20201",
+                broadAreaCode = "11D20000"
+            )
         )
-        every { skiResortRepository.findAll() } returns skiResorts
+        every { skiResortRepository.findAllByOrderByOpeningDateAsc() } returns skiResorts
         every { currentWeatherRepository.findBySkiResortResortId(any()) } returns null
         every { dailyWeatherRepository.findAllBySkiResortResortId(any()) } returns emptyList()
 

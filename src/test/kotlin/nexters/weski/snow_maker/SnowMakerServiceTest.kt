@@ -36,7 +36,19 @@ class SnowMakerServiceTest {
         // Given
         val resortId = 1L
         val isPositive = true
-        val skiResort = SkiResort(resortId, "스키장 A", ResortStatus.운영중, null, null, 5, 10)
+        val skiResort = SkiResort(
+            resortId = 1,
+            name = "스키장 A",
+            status = ResortStatus.운영중,
+            openingDate = null,
+            closingDate = null,
+            openSlopes = 3,
+            totalSlopes = 8,
+            xCoordinate = "12.0",
+            yCoordinate = "34.0",
+            detailedAreaCode = "11D20201",
+            broadAreaCode = "11D20000"
+        )
         val snowMakerVote = SnowMakerVote(
             isPositive = isPositive,
             skiResort = skiResort

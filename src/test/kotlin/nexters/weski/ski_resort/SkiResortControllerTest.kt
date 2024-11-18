@@ -43,8 +43,8 @@ class SkiResortControllerTest @Autowired constructor(
         )
         // Given
         val skiResorts = listOf(
-            SkiResortResponseDto(1, "스키장 A", ResortStatus.운영중.name, 3, currentWeather, weeklyWeather),
-            SkiResortResponseDto(2, "스키장 B", ResortStatus.운영중.name, 4, currentWeather, weeklyWeather),
+            SkiResortResponseDto(1, "스키장 A", ResortStatus.운영중.name, "미정", "미정", 3, currentWeather, weeklyWeather),
+            SkiResortResponseDto(2, "스키장 B", ResortStatus.운영중.name, "미정", "미정", 4, currentWeather, weeklyWeather),
         )
         every { skiResortService.getAllSkiResortsAndWeather() } returns skiResorts
 
