@@ -11,6 +11,8 @@ data class SkiResortResponseDto(
     val resortId: Long,
     val name: String,
     val status: String,
+    val openingDate: String,
+    val closingDate: String,
     val openSlopes: Int,
     val currentWeather: SimpleCurrentWeatherDto,
     val weeklyWeather: List<WeeklyWeatherDto>
@@ -25,6 +27,8 @@ data class SkiResortResponseDto(
                 resortId = skiResort.resortId,
                 name = skiResort.name,
                 status = skiResort.status.name,
+                openingDate = skiResort.openingDate?.toString() ?: "미정",
+                closingDate = skiResort.closingDate?.toString() ?: "미정",
                 openSlopes = skiResort.openSlopes,
                 currentWeather = currentWeather?.let {
                     SimpleCurrentWeatherDto(
