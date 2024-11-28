@@ -4,6 +4,9 @@
 ### 스키장 정보 조회 API
 GET http://localhost:8080/api/ski-resorts
 
+### 스키장 정보 조회 API
+GET http://localhost:8080/api/ski-resort/{{resortId}}
+
 ### 날씨 정보 조회 API
 GET http://localhost:8080/api/weather/{{resortId}}
 

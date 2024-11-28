@@ -22,6 +22,16 @@ class SkiResortService(
         }
     }
 
+    fun getSkiResortAndWeather(resortId: Long): SkiResortResponseDto {
+        val skiResort = skiResortRepository.findById(resortId)
+            .orElseThrow { IllegalArgumentException("해당 ID의 스키장이 존재하지 않습니다.") }
+
+        val currentWeather = currentWeatherRepository.findBySkiResortResortId(skiResort.resortId)
+        val weeklyWeather = dailyWeatherRepository.findAllBySkiResortResortId(skiResort.resortId)
+
+        return SkiResortResponseDto.fromEntity(skiResort, currentWeather, weeklyWeather)
+    }
+
     fun updateResortDate(resortId: Long, dateType: DateType, date: LocalDate) {
         val skiResort = skiResortRepository.findById(resortId)
             .orElseThrow { IllegalArgumentException("해당 ID의 스키장이 존재하지 않습니다.") }
