@@ -27,5 +27,5 @@ data class Slope(
 ) : BaseEntity()
 
 enum class DifficultyLevel {
-    초급, 중급, 중상급, 상급, 최상급, 파크
+    초급, 초중급 ,중급, 중상급, 상급, 최상급, 파크, 익스트림
 }
