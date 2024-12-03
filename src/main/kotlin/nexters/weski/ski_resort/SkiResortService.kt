@@ -1,6 +1,7 @@
 package nexters.weski.ski_resort
 
 import nexters.weski.batch.DateType
+import nexters.weski.slope.SlopeService
 import nexters.weski.weather.CurrentWeatherRepository
 import nexters.weski.weather.DailyWeatherRepository
 import org.springframework.stereotype.Service
@@ -10,7 +11,8 @@ import java.time.LocalDate
 class SkiResortService(
     private val skiResortRepository: SkiResortRepository,
     private val currentWeatherRepository: CurrentWeatherRepository,
-    private val dailyWeatherRepository: DailyWeatherRepository
+    private val dailyWeatherRepository: DailyWeatherRepository,
+    private val slopeService: SlopeService
 ) {
     fun getAllSkiResortsAndWeather(): List<SkiResortResponseDto> {
         val skiResorts = skiResortRepository.findAllByOrderByOpeningDateAsc()
@@ -63,4 +65,13 @@ class SkiResortService(
         }
     }
 
+    fun updateSkiResortSlopeCount() {
+        val skiResorts = skiResortRepository.findAll()
+        skiResorts.forEach { skiResort ->
+            val totalSlopeCount = slopeService.getTotalSlopeCount(skiResort.resortId)
+            val openingSlopeCount = slopeService.getOpeningSlopeCount(skiResort.resortId)
+            val updatedSkiResort = skiResort.copy(totalSlopes = totalSlopeCount, openSlopes = openingSlopeCount)
+            skiResortRepository.save(updatedSkiResort)
+        }
+    }
 }

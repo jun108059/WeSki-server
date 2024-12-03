@@ -15,11 +15,11 @@ data class Slope(
     @Enumerated(EnumType.STRING)
     val difficulty: DifficultyLevel,
 
-    val isDayOperating: Boolean = false,
-    val isNightOperating: Boolean = false,
-    val isLateNightOperating: Boolean = false,
-    val isDawnOperating: Boolean = false,
-    val isMidnightOperating: Boolean = false,
+    var isDayOperating: Boolean = false,
+    var isNightOperating: Boolean = false,
+    var isLateNightOperating: Boolean = false,
+    var isDawnOperating: Boolean = false,
+    var isMidnightOperating: Boolean = false,
 
     @ManyToOne
     @JoinColumn(name = "resort_id")

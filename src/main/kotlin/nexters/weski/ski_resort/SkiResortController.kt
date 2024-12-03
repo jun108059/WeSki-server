@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "전체 스키장 정보 API", description = "전체 스키장 날씨 및 슬로프 정보 관련")
+@Tag(name = "스키장 정보 API", description = "전체 스키장 날씨 및 슬로프 정보 관련")
 @RestController
 class SkiResortController(
     private val skiResortService: SkiResortService
