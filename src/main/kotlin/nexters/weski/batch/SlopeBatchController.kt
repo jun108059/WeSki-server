@@ -5,21 +5,21 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import nexters.weski.ski_resort.SkiResortService
+import nexters.weski.slope.SlopeService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
-
-@Tag(name = "스키장 데이터 업데이트 API", description = "스키장 데이터를 업데이트")
+@Tag(name = "슬로프 데이터 업데이트 API", description = "스키장 슬로프 데이터를 업데이트")
 @RestController
-class ResortBatchController(
+class SlopeBatchController(
+    private val slopeService: SlopeService,
     private val resortService: SkiResortService
 ) {
     @Operation(
-        summary = "스키장 개장일/폐장일 업데이트 API",
+        summary = "스키장 슬로프 운영 현황 업데이트 API",
         description = """
-            스키장 개장일을 업데이트하면 해당 스키장의 개장일이 변경됩니다.
-            date : OPENING_DATE, CLOSING_DATE 중 하나를 선택합니다. 
+            스키장 id, 슬로프 이름, 주간/야간/심야/새벽/자정, 운영 여부를 파라미터로 전달해서 업데이트합니다.
             resortId는 다음과 같습니다.
             1, 지산 리조트
             2, 곤지암 스키장
@@ -34,38 +34,34 @@ class ResortBatchController(
             11, 오투리조트
         """
     )
-    @PostMapping("/batch/resort-date")
-    fun updateResortDate(
+    @PostMapping("/batch/slope-status")
+    fun updateSlopeStatus(
         @RequestBody
         @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "스키장 개장일/폐장일 업데이트 요청",
+            description = "slopes 운영여부 업데이트 요청",
             required = true,
             content = [Content(
                 mediaType = "application/json",
-                schema = Schema(implementation = ResortDateUpdateRequest::class)
+                schema = Schema(implementation = SlopeDateUpdateRequest::class)
             )]
         )
-        request: ResortDateUpdateRequest
+        request: SlopeDateUpdateRequest
     ) {
-        resortService.updateResortDate(
+        slopeService.updateSlopeOpeningStatus(
             resortId = request.resortId,
-            dateType = request.dateType,
-            date = request.date
+            slopeName = request.slopeName,
+            timeType = request.timeType,
+            isOpen = request.isOpen
         )
     }
 
     @Operation(
-        summary = "스키장 운영상태 업데이트",
-        description = """
-            스키장 운영상태를 업데이트하면 해당 스키장의 개장일과 폐장일을 기준으로 운영상태가 변경됩니다.
-            스키장 운영상태는 다음과 같습니다.
-            - 예정
-            - 운영중
-            - 운영종료
-        """
+        summary = "스키장 슬로프 count 업데이트",
+        description = "스키장의 슬로프 count가 업데이트됩니다."
     )
-    @PostMapping("/batch/resort-status")
-    fun updateResortStatus() {
-        resortService.updateSkiResortStatus()
+    @PostMapping("/batch/resort-slope-count")
+    fun updateSlopeCount() {
+        resortService.updateSkiResortSlopeCount()
     }
+
 }

@@ -12,4 +12,9 @@ class ResortStatusUpdateScheduler(
     fun scheduleResortStatusUpdate() {
         skiResortService.updateSkiResortStatus()
     }
+
+    @Scheduled(cron = "30 0 0 * * ?")
+    fun scheduleResortSlopeCountUpdate() {
+        skiResortService.updateSkiResortSlopeCount()
+    }
 }
