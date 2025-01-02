@@ -180,7 +180,7 @@ class ExternalWeatherService(
 
         val tmFc = baseDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + baseTime
         // 기존 데이터 삭제
-        dailyWeatherRepository.deleteByDDayGreaterThanEqual(2)
+        dailyWeatherRepository.deleteByDDayGreaterThanEqual(4)
         skiResortRepository.findAll().forEach { resort ->
             val detailedAreaCode = resort.detailedAreaCode
             val broadAreaCode = resort.broadAreaCode
@@ -252,7 +252,7 @@ class ExternalWeatherService(
             return weatherList
         }
 
-        for (i in 3..10) {
+        for (i in 5..10) {
             val forecastDate = now.plusDays(i.toLong() - 1)
             val dayOfWeek = forecastDate.dayOfWeek.name // 영어 요일명
 
@@ -280,7 +280,7 @@ class ExternalWeatherService(
 
     private fun getPrecipitationChance(midLandData: JsonNode, day: Int): Int {
         return when (day) {
-            in 3..7 -> {
+            in 5..7 -> {
                 val amChance = midLandData.get("rnSt${day}Am")?.asInt() ?: 0
                 val pmChance = midLandData.get("rnSt${day}Pm")?.asInt() ?: 0
                 maxOf(amChance, pmChance)
@@ -296,7 +296,7 @@ class ExternalWeatherService(
 
     private fun getCondition(midLandData: JsonNode, day: Int): String {
         return when (day) {
-            in 3..7 -> {
+            in 5..7 -> {
                 val amCondition = midLandData.get("wf${day}Am")?.asText() ?: ""
                 val pmCondition = midLandData.get("wf${day}Pm")?.asText() ?: ""
                 selectWorseCondition(amCondition, pmCondition)
