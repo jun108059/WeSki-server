@@ -1,6 +1,7 @@
 package nexters.weski.weather
 
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 
 @Service
 class WeatherService(
@@ -11,7 +12,15 @@ class WeatherService(
     fun getWeatherByResortId(resortId: Long): WeatherDto? {
         val currentWeather = currentWeatherRepository.findBySkiResortResortId(resortId) ?: return null
         val hourlyWeather = hourlyWeatherRepository.findBySkiResortResortId(resortId)
-        val dailyWeather = dailyWeatherRepository.findAllBySkiResortResortId(resortId)
+
+        val today = LocalDate.now()
+        val after7Days = today.plusDays(7)
+
+        val dailyWeather = dailyWeatherRepository.findAllBySkiResortResortIdAndForecastDateBetween(
+            resortId = resortId,
+            startDate = today,
+            endDate = after7Days
+        )
 
         return WeatherDto.fromEntities(currentWeather, hourlyWeather, dailyWeather)
     }
