@@ -16,7 +16,7 @@ class WeatherService(
         val today = LocalDate.now()
         val after7Days = today.plusDays(7)
 
-        val dailyWeather = dailyWeatherRepository.findAllBySkiResortResortIdAndForecastDateBetween(
+        val dailyWeather = dailyWeatherRepository.findAllBySkiResortResortIdAndForecastDateBetweenOrderByForecastDate(
             resortId = resortId,
             startDate = today,
             endDate = after7Days

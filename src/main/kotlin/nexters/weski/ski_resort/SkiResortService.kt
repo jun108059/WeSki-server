@@ -18,7 +18,11 @@ class SkiResortService(
         val skiResorts = skiResortRepository.findAllByOrderByOpeningDateAsc()
         return skiResorts.map { skiResort ->
             val currentWeather = currentWeatherRepository.findBySkiResortResortId(skiResort.resortId)
-            val weeklyWeather = dailyWeatherRepository.findAllBySkiResortResortId(skiResort.resortId)
+            val weeklyWeather = dailyWeatherRepository.findBySkiResortAndForecastDateBetweenOrderByForecastDate(
+                skiResort = skiResort,
+                startDate = LocalDate.now(),
+                endDate = LocalDate.now().plusDays(7)
+            )
 
             SkiResortResponseDto.fromEntity(skiResort, currentWeather, weeklyWeather)
         }
@@ -29,7 +33,11 @@ class SkiResortService(
             .orElseThrow { IllegalArgumentException("해당 ID의 스키장이 존재하지 않습니다.") }
 
         val currentWeather = currentWeatherRepository.findBySkiResortResortId(skiResort.resortId)
-        val weeklyWeather = dailyWeatherRepository.findAllBySkiResortResortId(skiResort.resortId)
+        val weeklyWeather = dailyWeatherRepository.findBySkiResortAndForecastDateBetweenOrderByForecastDate(
+            skiResort = skiResort,
+            startDate = LocalDate.now(),
+            endDate = LocalDate.now().plusDays(7)
+        )
 
         return SkiResortResponseDto.fromEntity(skiResort, currentWeather, weeklyWeather)
     }
