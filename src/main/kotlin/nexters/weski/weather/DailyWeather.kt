@@ -14,7 +14,7 @@ data class DailyWeather(
 
     var forecastDate: LocalDate,
     var dayOfWeek: String,
-    val dDay: Int,
+    var dDay: Int,
     var precipitationChance: Int,
     var maxTemp: Int,
     var minTemp: Int,

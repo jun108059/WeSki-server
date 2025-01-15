@@ -6,7 +6,10 @@ import java.time.LocalDate
 
 interface DailyWeatherRepository : JpaRepository<DailyWeather, Long> {
     fun findAllBySkiResortResortId(resortId: Long): List<DailyWeather>
-    fun deleteByDDayGreaterThanEqual(dDay: Int)
-    fun findBySkiResortAndDDay(skiResort: SkiResort, dDay: Int): DailyWeather?
-    fun findBySkiResortAndForecastDate(skiResort: SkiResort, forecastDate: LocalDate): List<DailyWeather>
+    fun findBySkiResortAndForecastDate(skiResort: SkiResort, forecastDate: LocalDate): DailyWeather?
+    fun findAllBySkiResortResortIdAndForecastDateBetween(
+        resortId: Long,
+        startDate: LocalDate,
+        endDate: LocalDate
+    ): List<DailyWeather>
 }

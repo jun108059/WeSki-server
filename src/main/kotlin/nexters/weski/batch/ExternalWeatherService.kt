@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Period
 import java.time.format.DateTimeFormatter
 import kotlin.math.pow
 
@@ -37,6 +38,7 @@ class ExternalWeatherService(
         }
         val baseDate = baseLocalDateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
         skiResortRepository.findAll().forEach { resort ->
+            // 초단기 실황 API 호출
             val url = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst" +
                     "?serviceKey=$apiKey" +
                     "&pageNo=1" +
@@ -99,7 +101,8 @@ class ExternalWeatherService(
         val feelsLike = calculateFeelsLike(temperature, windSpeed)
         val condition = determineCondition(data)
         val description = generateDescription(condition, temperature)
-        val dailyWeather = dailyWeatherRepository.findBySkiResortAndForecastDate(resort, LocalDate.now())[0]
+        val dailyWeather = dailyWeatherRepository.findBySkiResortAndForecastDate(resort, LocalDate.now())
+            ?: throw IllegalStateException("Daily weather not found for today")
         // dailyWeather.maxTemp보다 temperature이 높으면 maxTemp를 업데이트
         if (temperature > dailyWeather.maxTemp) {
             dailyWeather.maxTemp = temperature
@@ -174,17 +177,63 @@ class ExternalWeatherService(
 
     @Transactional
     fun updateDailyWeather() {
-        val baseDateTime = getYesterdayBaseDateTime()
-        val baseDate = baseDateTime.first
-        val baseTime = baseDateTime.second
+        val baseDateTime23 = getYesterdayBaseDateTime23()
+        val baseDate = baseDateTime23.first
+        val baseTime = baseDateTime23.second
 
-        val tmFc = baseDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + baseTime
-        // 기존 데이터 삭제
-        dailyWeatherRepository.deleteByDDayGreaterThanEqual(4)
         skiResortRepository.findAll().forEach { resort ->
+            val groupedMap = getShortTermDataGroupedByDate(
+                baseDate = baseDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")),
+                baseTime = baseTime,
+                nx = resort.xCoordinate,
+                ny = resort.yCoordinate
+            )
+            // groupedMap: Map<LocalDate, List<JsonNode>>
+            // key: 예보날짜, value: 해당 날짜의 시간별 항목들
+            groupedMap.forEach { (date, items) ->
+                // 3일 뒤(= 오늘 포함 최대 3~4일) 정도까지만 저장한다고 가정
+                // 필요하면 조건문으로 필터링 가능
+                if (date.isAfter(LocalDate.now().plusDays(3))) {
+                    return@forEach // 3일 이후 데이터는 무시(예시)
+                }
+
+                val parsedDaily = parseDailyForecastByDay(date, items)
+
+                // DB에서 (resort, date)로 기존 엔티티가 있는지 검색
+                val existing = dailyWeatherRepository.findBySkiResortAndForecastDate(resort, date)
+                if (existing != null) {
+                    // update
+                    existing.minTemp = parsedDaily.minTemp
+                    existing.maxTemp = parsedDaily.maxTemp
+                    existing.precipitationChance = parsedDaily.precipitationChance
+                    existing.condition = parsedDaily.getCondition()
+
+                    // dayOfWeek, dDay도 재계산
+                    existing.dayOfWeek = convertDayOfWeek(date.dayOfWeek.name)
+                    existing.dDay = calcDDay(date)
+
+                    dailyWeatherRepository.save(existing)
+                } else {
+                    // insert
+                    val newDaily = DailyWeather(
+                        forecastDate = date,
+                        dayOfWeek = convertDayOfWeek(date.dayOfWeek.name),
+                        dDay = calcDDay(date),
+                        precipitationChance = parsedDaily.precipitationChance,
+                        maxTemp = parsedDaily.maxTemp,
+                        minTemp = parsedDaily.minTemp,
+                        condition = parsedDaily.getCondition(),
+                        skiResort = resort
+                    )
+                    dailyWeatherRepository.save(newDaily)
+                }
+            }
             val detailedAreaCode = resort.detailedAreaCode
             val broadAreaCode = resort.broadAreaCode
-
+            val baseDateTime18 = getYesterdayBaseDateTime18()
+            val baseDate18 = baseDateTime18.first
+            val baseTime18 = baseDateTime18.second
+            val tmFc = baseDate18.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + baseTime18
             // 첫 번째 API 호출 (중기 기온 예보)
             val midTaUrl = buildMidTaUrl(detailedAreaCode, tmFc)
             val midTaResponse = restTemplate.getForObject(midTaUrl, String::class.java)
@@ -201,7 +250,14 @@ class ExternalWeatherService(
         }
     }
 
-    private fun getYesterdayBaseDateTime(): Pair<LocalDate, String> {
+    private fun getYesterdayBaseDateTime23(): Pair<LocalDate, String> {
+        // 어제 날짜
+        val yesterday = LocalDate.now().minusDays(1)
+        val hour = 23 // 23시 기준
+        return Pair(yesterday, String.format("%02d00", hour))
+    }
+
+    private fun getYesterdayBaseDateTime18(): Pair<LocalDate, String> {
         // 어제 날짜
         val yesterday = LocalDate.now().minusDays(1)
         val hour = 18 // 18시 기준
@@ -262,17 +318,32 @@ class ExternalWeatherService(
             val precipitationChance = getPrecipitationChance(midLandData, i)
             val condition = getCondition(midLandData, i)
 
-            val dailyWeather = DailyWeather(
-                skiResort = resort,
-                forecastDate = forecastDate,
-                dayOfWeek = convertDayOfWeek(dayOfWeek),
-                dDay = i - 1,
-                precipitationChance = precipitationChance,
-                maxTemp = maxTemp,
-                minTemp = minTemp,
-                condition = condition
-            )
-            weatherList.add(dailyWeather)
+            // 1) 먼저 DB에서 (리조트, forecastDate)로 조회
+            val existingWeather: DailyWeather? = dailyWeatherRepository.findBySkiResortAndForecastDate(resort, forecastDate)
+            if (existingWeather != null) {
+                existingWeather.dayOfWeek = convertDayOfWeek(dayOfWeek)
+                existingWeather.precipitationChance = precipitationChance
+                existingWeather.maxTemp = maxTemp
+                existingWeather.minTemp = minTemp
+                existingWeather.condition = condition
+                existingWeather.dDay = i - 1
+                dailyWeatherRepository.save(existingWeather)
+                weatherList.add(existingWeather)
+                continue
+            } else {
+                // 2) 없으면 새로 생성
+                val dailyWeather = DailyWeather(
+                    skiResort = resort,
+                    forecastDate = forecastDate,
+                    dayOfWeek = convertDayOfWeek(dayOfWeek),
+                    dDay = i - 1,
+                    precipitationChance = precipitationChance,
+                    maxTemp = maxTemp,
+                    minTemp = minTemp,
+                    condition = condition
+                )
+                weatherList.add(dailyWeather)
+            }
         }
 
         return weatherList
@@ -310,6 +381,10 @@ class ExternalWeatherService(
         }
     }
 
+    /**
+     * 오전/오후 예보 중 '우선순위가 더 나쁜' 쪽을 고르는 로직 (예: "비"가 "구름많음"보다 우선)
+     * 상황에 맞게 우선순위를 조정할 수 있음
+     */
     private fun selectWorseCondition(am: String, pm: String): String {
         val conditionPriority = listOf(
             "맑음",
@@ -364,6 +439,7 @@ class ExternalWeatherService(
             val nx = resort.xCoordinate
             val ny = resort.yCoordinate
 
+            // 단기예보조회
             val url = buildVilageFcstUrl(baseDate, baseTime, nx, ny)
             val response = restTemplate.getForObject(url, String::class.java)
             val forecastData = parseVilageFcstResponse(response)
@@ -534,7 +610,7 @@ class ExternalWeatherService(
             val maxTemp = if (tmxValues.isNotEmpty()) tmxValues.maxOrNull() ?: 0 else tmpValues.maxOrNull() ?: 0
 
             // 주간 날씨 업데이트
-            val existingWeather = dailyWeatherRepository.findBySkiResortAndDDay(resort, dDay)
+            val existingWeather = dailyWeatherRepository.findBySkiResortAndForecastDate(resort, date)
             if (existingWeather != null) {
                 existingWeather.forecastDate = date
                 existingWeather.dayOfWeek = convertDayOfWeek(date.dayOfWeek.name)
@@ -576,5 +652,108 @@ class ExternalWeatherService(
 
             else -> ConditionPriority("맑음", 1)
         }
+    }
+
+    /**
+     * 단기 예보(최대 3일 후) 데이터를 가져오고, 날짜별로 묶어 반환
+     * @param baseDate : 조회 기준 날짜(yyyyMMdd)
+     * @param baseTime : 조회 기준 시간(HHmm)
+     * @param nx, ny : 격자 좌표
+     * @return Map<LocalDate, List<JsonNode>> 형태로, 날짜별로 아이템들을 묶어서 반환
+     */
+    fun getShortTermDataGroupedByDate(
+        baseDate: String,
+        baseTime: String,
+        nx: String,
+        ny: String
+    ): Map<LocalDate, List<JsonNode>> {
+        // 단기예보조회 URL
+        val url = buildShortTermUrl(baseDate, baseTime, nx, ny)
+        val response = restTemplate.getForObject(url, String::class.java) ?: return emptyMap()
+
+        val rootNode = objectMapper.readTree(response)
+        val items = rootNode["response"]["body"]["items"]?.get("item") ?: return emptyMap()
+
+        // 날짜별로 묶기 위한 맵
+        val groupedMap = mutableMapOf<LocalDate, MutableList<JsonNode>>()
+
+        for (item in items) {
+            val fcstDateStr = item["fcstDate"].asText() // 예) "20250116"
+            val localDate = LocalDate.parse(fcstDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"))
+
+            // 아직 존재하지 않는 키면 새로운 리스트로 초기화
+            val listForDate = groupedMap.getOrPut(localDate) { mutableListOf() }
+            listForDate.add(item)
+        }
+
+        return groupedMap
+    }
+
+    private fun buildShortTermUrl(baseDate: String, baseTime: String, nx: String, ny: String): String {
+        return "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst" +
+                "?serviceKey=$apiKey" +
+                "&pageNo=1" +
+                "&numOfRows=1000" +
+                "&dataType=JSON" +
+                "&base_date=$baseDate" +
+                "&base_time=$baseTime" +
+                "&nx=$nx" +
+                "&ny=$ny"
+    }
+
+    /**
+     * 날짜별 List<JsonNode> 에서 일최저/일최고 기온, POP, PTY, SKY 등을 추출해 DailyForecast 생성
+     */
+    fun parseDailyForecastByDay(date: LocalDate, items: List<JsonNode>): DailyForecast {
+        val daily = DailyForecast(date = date)
+
+        for (item in items) {
+            val category = item["category"].asText()  // 예: TMP, TMN, TMX, POP, PTY, SKY
+            val fcstValue = item["fcstValue"].asText()
+
+            when (category) {
+                "TMP" -> {
+                    val tmpVal = fcstValue.toIntOrNull() ?: continue
+                    daily.minTemp = minOf(daily.minTemp, tmpVal)
+                    daily.maxTemp = maxOf(daily.maxTemp, tmpVal)
+                }
+                "TMN" -> {
+                    val tmnVal = fcstValue.toIntOrNull() ?: continue
+                    daily.minTemp = tmnVal
+                }
+                "TMX" -> {
+                    val tmxVal = fcstValue.toIntOrNull() ?: continue
+                    daily.maxTemp = tmxVal
+                }
+                "POP" -> {
+                    // 하루 중 가장 높은 강수확률을 그날 확률로 본다
+                    val popVal = fcstValue.toIntOrNull() ?: 0
+                    daily.precipitationChance = maxOf(daily.precipitationChance, popVal)
+                }
+                "PTY" -> {
+                    // 강수형태 코드 중 '가장 안 좋은(큰) 값'을 우선
+                    val ptyVal = fcstValue.toIntOrNull() ?: 0
+                    daily.ptyCode = maxOf(daily.ptyCode, ptyVal)
+                }
+                "SKY" -> {
+                    // 마찬가지로 SKY도 '가장 흐린(큰) 값'을 우선
+                    // (1=맑음, 3=구름많음, 4=흐림)
+                    val skyVal = fcstValue.toIntOrNull() ?: 1
+                    daily.skyCode = maxOf(daily.skyCode, skyVal)
+                }
+            }
+        }
+
+        // 만약 TMN, TMX 둘 다 없었다면 TMP 기반의 min/maxTemp를 그대로 사용
+        // 하나라도 있으면 해당 값을 우선으로(이미 위에서 대입)
+        if (daily.minTemp == Int.MAX_VALUE) daily.minTemp = 0
+        if (daily.maxTemp == Int.MIN_VALUE) daily.maxTemp = 0
+
+        return daily
+    }
+
+    private fun calcDDay(forecastDate: LocalDate): Int {
+        val today = LocalDate.now()
+        return Period.between(today, forecastDate).days
     }
 }
