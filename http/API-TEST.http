@@ -1,7 +1,7 @@
 ### 변수 설정
 @resortId = 1
 
-### 스키장 정보 조회 API
+### 전체 스키장 정보 조회 API
 GET http://localhost:8080/api/ski-resorts
 
 ### 스키장 정보 조회 API
@@ -33,3 +33,6 @@ GET http://localhost:8080/batch/weekly-weather
 
 ### 시간별 날씨 Batch
 GET http://localhost:8080/batch/hourly-weather
+
+### Admin 스키장 조회 API
+GET http://localhost:8080/api/admin/ski-resorts

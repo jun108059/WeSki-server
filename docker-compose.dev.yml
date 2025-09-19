@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  weski-dev:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DATABASE_URL=jdbc:mysql://mysql-dev:3306/weski_dev?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=dev_password
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+      - TMAP_API_KEY=${TMAP_API_KEY}
+    depends_on:
+      - mysql-dev
+    networks:
+      - weski-dev-network
+
+  mysql-dev:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=dev_password
+      - MYSQL_DATABASE=weski_dev
+      - MYSQL_USER=weski
+      - MYSQL_PASSWORD=dev_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-dev-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - weski-dev-network
+
+volumes:
+  mysql-dev-data:
+
+networks:
+  weski-dev-network:
+    driver: bridge
