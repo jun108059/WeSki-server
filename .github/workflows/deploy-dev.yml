@@ -38,9 +38,10 @@ jobs:
       - name: Build application
         run: ./gradlew clean build -x test
 
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
       - name: Deploy to Railway Dev
-        uses: railwayapp/cli@v3
-        with:
-          command: up --service WeSki-server-dev
+        run: railway up --service WeSki-server-dev
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
