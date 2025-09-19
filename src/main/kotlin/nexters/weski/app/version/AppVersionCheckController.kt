@@ -1,9 +1,11 @@
-package nexters.weski.app_version
+package nexters.weski.app.version
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "App 최소 버전 check API", description = "App 최소 버전 check API")
 @RestController

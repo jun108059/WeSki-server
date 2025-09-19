@@ -1,8 +1,7 @@
 package nexters.weski.weather
 
 
-import nexters.weski.ski_resort.SkiResortRepository
-import org.springframework.scheduling.annotation.Scheduled
+import nexters.weski.ski.resort.SkiResortRepository
 import org.springframework.stereotype.Service
 
 @Service

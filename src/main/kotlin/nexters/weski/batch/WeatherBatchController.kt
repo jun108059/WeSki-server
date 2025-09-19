@@ -5,9 +5,8 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class WeatherBatchController(
-    private val externalWeatherService: ExternalWeatherService
+    private val externalWeatherService: ExternalWeatherService,
 ) {
-
     @GetMapping("/batch/current-weather")
     fun scheduleWeatherUpdate() {
         externalWeatherService.updateCurrentWeather()

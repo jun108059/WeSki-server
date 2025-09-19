@@ -1,4 +1,4 @@
-package nexters.weski.ski_resort
+package nexters.weski.ski.resort
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every

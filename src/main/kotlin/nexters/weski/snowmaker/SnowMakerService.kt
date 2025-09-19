@@ -1,12 +1,13 @@
-package nexters.weski.snow_maker
+package nexters.weski.snowmaker
 
-import nexters.weski.ski_resort.SkiResortRepository
+import jakarta.transaction.Transactional
+import nexters.weski.ski.resort.SkiResortRepository
 import org.springframework.stereotype.Service
 
 @Service
 class SnowMakerService(
     private val snowMakerVoteRepository: SnowMakerVoteRepository,
-    private val skiResortRepository: SkiResortRepository
+    private val skiResortRepository: SkiResortRepository,
 ) {
     fun getSnowMaker(resortId: Long): SnowMakerDto {
         val totalVotes = snowMakerVoteRepository.countBySkiResortResortId(resortId)
@@ -17,20 +18,28 @@ class SnowMakerService(
             resortId = resortId,
             totalVotes = totalVotes,
             positiveVotes = positiveVotes,
-            status = status
+            status = status,
         )
     }
 
-    fun voteSnowMaker(resortId: Long, isPositive: Boolean) {
+    @Transactional
+    fun voteSnowMaker(
+        resortId: Long,
+        isPositive: Boolean,
+    ) {
         val skiResort = skiResortRepository.findById(resortId).orElseThrow { Exception("Resort not found") }
-        val vote = SnowMakerVote(
-            isPositive = isPositive,
-            skiResort = skiResort
-        )
+        val vote =
+            SnowMakerVote(
+                isPositive = isPositive,
+                skiResort = skiResort,
+            )
         snowMakerVoteRepository.save(vote)
     }
 
-    private fun calculateStatus(totalVotes: Long, positiveVotes: Long): String {
+    private fun calculateStatus(
+        totalVotes: Long,
+        positiveVotes: Long,
+    ): String {
         if (totalVotes == 0L) return "정보 없음"
         val positiveRate = (positiveVotes.toDouble() / totalVotes.toDouble()) * 100
         return when {

@@ -5,10 +5,16 @@ import org.springframework.data.jpa.repository.Query
 
 interface SlopeRepository : JpaRepository<Slope, Long> {
     fun findAllBySkiResortResortId(resortId: Long): List<Slope>
-    fun countBySkiResortResortId(resortId: Long): Int
-    fun findBySkiResortResortIdAndName(resortId: Long, name: String): Slope?
 
-    @Query("""
+    fun countBySkiResortResortId(resortId: Long): Int
+
+    fun findBySkiResortResortIdAndName(
+        resortId: Long,
+        name: String,
+    ): Slope?
+
+    @Query(
+        """
         SELECT COUNT(s)
         FROM Slope s
         WHERE s.skiResort.resortId = :resortId 
@@ -17,6 +23,7 @@ interface SlopeRepository : JpaRepository<Slope, Long> {
                OR s.isLateNightOperating = true 
                OR s.isDawnOperating = true 
                OR s.isMidnightOperating = true)
-    """)
+    """,
+    )
     fun countOperatingSlopesByResortId(resortId: Long): Int
 }

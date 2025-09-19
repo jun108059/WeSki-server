@@ -1,4 +1,4 @@
-package nexters.weski.snow_maker
+package nexters.weski.snowmaker
 
 data class SnowMakerDto(
     val resortId: Long,

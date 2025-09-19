@@ -1,26 +1,23 @@
 package nexters.weski.weather
 
-import java.time.LocalDateTime
-
 data class WeatherDto(
     val resortId: Long,
     val currentWeather: CurrentWeatherDto,
     val hourlyWeather: List<HourlyWeatherDto>,
-    val weeklyWeather: List<DailyWeatherDto>
+    val weeklyWeather: List<DailyWeatherDto>,
 ) {
     companion object {
         fun fromEntities(
             currentWeather: CurrentWeather,
             hourlyWeather: List<HourlyWeather>,
-            dailyWeather: List<DailyWeather>
-        ): WeatherDto {
-            return WeatherDto(
+            dailyWeather: List<DailyWeather>,
+        ): WeatherDto =
+            WeatherDto(
                 resortId = currentWeather.skiResort.resortId,
                 currentWeather = CurrentWeatherDto.fromEntity(currentWeather),
                 hourlyWeather = hourlyWeather.map { HourlyWeatherDto.fromEntity(it) },
-                weeklyWeather = dailyWeather.map { DailyWeatherDto.fromEntity(it) }
+                weeklyWeather = dailyWeather.map { DailyWeatherDto.fromEntity(it) },
             )
-        }
     }
 }
 
@@ -30,19 +27,18 @@ data class CurrentWeatherDto(
     val minTemperature: Int,
     val feelsLike: Int,
     val description: String,
-    val condition: String
+    val condition: String,
 ) {
     companion object {
-        fun fromEntity(entity: CurrentWeather): CurrentWeatherDto {
-            return CurrentWeatherDto(
+        fun fromEntity(entity: CurrentWeather): CurrentWeatherDto =
+            CurrentWeatherDto(
                 temperature = entity.temperature,
                 maxTemperature = entity.maxTemp,
                 minTemperature = entity.minTemp,
                 feelsLike = entity.feelsLike,
                 description = entity.description,
-                condition = entity.condition
+                condition = entity.condition,
             )
-        }
     }
 }
 
@@ -50,17 +46,16 @@ data class HourlyWeatherDto(
     val time: String,
     val temperature: Int,
     val precipitationChance: String,
-    val condition: String
+    val condition: String,
 ) {
     companion object {
-        fun fromEntity(entity: HourlyWeather): HourlyWeatherDto {
-            return HourlyWeatherDto(
+        fun fromEntity(entity: HourlyWeather): HourlyWeatherDto =
+            HourlyWeatherDto(
                 time = entity.forecastTime,
                 temperature = entity.temperature,
                 precipitationChance = entity.precipitationChance.toPercentString(),
-                condition = entity.condition
+                condition = entity.condition,
             )
-        }
     }
 }
 
@@ -73,8 +68,8 @@ data class DailyWeatherDto(
     val condition: String,
 ) {
     companion object {
-        fun fromEntity(entity: DailyWeather): DailyWeatherDto {
-            return DailyWeatherDto(
+        fun fromEntity(entity: DailyWeather): DailyWeatherDto =
+            DailyWeatherDto(
                 day = entity.dayOfWeek,
                 date = entity.forecastDate.toString().toShortDate(),
                 precipitationChance = entity.precipitationChance.toPercentString(),
@@ -82,7 +77,6 @@ data class DailyWeatherDto(
                 minTemperature = entity.minTemp,
                 condition = entity.condition,
             )
-        }
     }
 }
 
@@ -91,12 +85,11 @@ data class SimpleCurrentWeatherDto(
     val description: String,
 ) {
     companion object {
-        fun fromEntity(entity: CurrentWeather): SimpleCurrentWeatherDto {
-            return SimpleCurrentWeatherDto(
+        fun fromEntity(entity: CurrentWeather): SimpleCurrentWeatherDto =
+            SimpleCurrentWeatherDto(
                 temperature = entity.temperature,
                 description = entity.description,
             )
-        }
     }
 }
 
@@ -107,14 +100,13 @@ data class WeeklyWeatherDto(
     val description: String,
 ) {
     companion object {
-        fun fromEntity(entity: DailyWeather): WeeklyWeatherDto {
-            return WeeklyWeatherDto(
+        fun fromEntity(entity: DailyWeather): WeeklyWeatherDto =
+            WeeklyWeatherDto(
                 day = entity.dayOfWeek,
                 maxTemperature = entity.maxTemp,
                 minTemperature = entity.minTemp,
-                description = entity.condition
+                description = entity.condition,
             )
-        }
     }
 }
 
@@ -125,18 +117,4 @@ fun String.toShortDate(): String {
 }
 
 // Int 데이터를 Int+% String으로 변환하는 메서드
-fun Int.toPercentString(): String {
-    return "$this%"
-}
-
-// LocalDateTime 데이터를 오전/오후 n시로 변경하는 메서드
-fun LocalDateTime.toLocalTimeString(): String {
-    val hour = this.hour
-    return if (hour < 12) {
-        "오전 ${hour}시"
-    } else if (hour == 12) {
-        "오후 ${hour}시"
-    } else {
-        "오후 ${hour - 12}시"
-    }
-}
+fun Int.toPercentString(): String = "$this%"

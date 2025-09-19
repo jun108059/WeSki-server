@@ -1,4 +1,4 @@
-package nexters.weski.ski_resort
+package nexters.weski.ski.resort
 
 import io.mockk.every
 import io.mockk.mockk

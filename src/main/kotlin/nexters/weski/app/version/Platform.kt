@@ -1,4 +1,4 @@
-package nexters.weski.app_version
+package nexters.weski.app.version
 
 enum class Platform {
     IOS,

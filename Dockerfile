@@ -10,7 +10,6 @@ EXPOSE 8080
 ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} weski-app.jar
 
-CMD java -Dserver.port=8080 \
-        -Dspring.datasource.username=master \
-        -Dspring.datasource.password=master \
+CMD java -Dserver.port=${PORT:-8080} \
+        -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} \
         -jar /weski-app.jar

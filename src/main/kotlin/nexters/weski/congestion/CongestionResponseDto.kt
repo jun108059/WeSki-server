@@ -6,15 +6,14 @@ import io.swagger.v3.oas.annotations.media.Schema
 data class CongestionResponseDto(
     val time: String,
     val congestion: Int,
-    val description: String
+    val description: String,
 ) {
     companion object {
-        fun fromEntity(congestion: Congestion): CongestionResponseDto {
-            return CongestionResponseDto(
+        fun fromEntity(congestion: Congestion): CongestionResponseDto =
+            CongestionResponseDto(
                 time = congestion.time,
                 congestion = congestion.congestion,
-                description = congestion.description
+                description = congestion.description,
             )
-        }
     }
 }

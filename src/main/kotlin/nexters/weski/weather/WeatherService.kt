@@ -7,7 +7,7 @@ import java.time.LocalDate
 class WeatherService(
     private val currentWeatherRepository: CurrentWeatherRepository,
     private val hourlyWeatherRepository: HourlyWeatherRepository,
-    private val dailyWeatherRepository: DailyWeatherRepository
+    private val dailyWeatherRepository: DailyWeatherRepository,
 ) {
     fun getWeatherByResortId(resortId: Long): WeatherDto? {
         val currentWeather = currentWeatherRepository.findBySkiResortResortId(resortId) ?: return null
@@ -16,11 +16,12 @@ class WeatherService(
         val today = LocalDate.now()
         val after7Days = today.plusDays(7)
 
-        val dailyWeather = dailyWeatherRepository.findAllBySkiResortResortIdAndForecastDateBetweenOrderByForecastDate(
-            resortId = resortId,
-            startDate = today,
-            endDate = after7Days
-        )
+        val dailyWeather =
+            dailyWeatherRepository.findAllBySkiResortResortIdAndForecastDateBetweenOrderByForecastDate(
+                resortId = resortId,
+                startDate = today,
+                endDate = after7Days,
+            )
 
         return WeatherDto.fromEntities(currentWeather, hourlyWeather, dailyWeather)
     }

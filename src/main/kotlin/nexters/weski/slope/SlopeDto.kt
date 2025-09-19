@@ -9,11 +9,11 @@ data class SlopeDto(
     val isLateNightOperating: Boolean,
     val isDawnOperating: Boolean,
     val isMidnightOperating: Boolean,
-    val webcamNo: Int?
+    val webcamNo: Int?,
 ) {
     companion object {
-        fun fromEntity(entity: Slope): SlopeDto {
-            return SlopeDto(
+        fun fromEntity(entity: Slope): SlopeDto =
+            SlopeDto(
                 slopeId = entity.id,
                 name = entity.name,
                 difficulty = entity.difficulty.name,
@@ -22,8 +22,7 @@ data class SlopeDto(
                 isLateNightOperating = entity.isLateNightOperating,
                 isDawnOperating = entity.isDawnOperating,
                 isMidnightOperating = entity.isMidnightOperating,
-                webcamNo = entity.webcamNumber
+                webcamNo = entity.webcamNumber,
             )
-        }
     }
 }

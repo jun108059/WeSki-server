@@ -7,8 +7,8 @@ data class DailyForecast(
     var minTemp: Int = Int.MAX_VALUE,
     var maxTemp: Int = Int.MIN_VALUE,
     var precipitationChance: Int = 0,
-    var ptyCode: Int = 0,  // PTY: 강수형태 코드
-    var skyCode: Int = 1   // SKY: 기본값을 맑음(1)으로
+    var ptyCode: Int = 0, // PTY: 강수형태 코드
+    var skyCode: Int = 1, // SKY: 기본값을 맑음(1)으로
 ) {
     // 최종 condition 계산
     fun getCondition(): String {

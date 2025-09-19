@@ -1,6 +1,5 @@
-package nexters.weski.weather
+package nexters.weski.snowmaker
 
-import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -10,23 +9,17 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import nexters.weski.common.BaseEntity
 import nexters.weski.ski.resort.SkiResort
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Entity
-@Table(name = "daily_weather")
-data class DailyWeather(
+@Table(name = "snow_quality_votes")
+data class SnowMakerVote(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    var forecastDate: LocalDate,
-    var dayOfWeek: String,
-    var dDay: Int,
-    var precipitationChance: Int,
-    var maxTemp: Int,
-    var minTemp: Int,
-    @Column(name = "`condition`")
-    var condition: String,
-    @ManyToOne
+    val isPositive: Boolean,
+    val votedAt: LocalDateTime = LocalDateTime.now(),
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "resort_id")
     val skiResort: SkiResort,
 ) : BaseEntity()

@@ -2,8 +2,8 @@ package nexters.weski.weather
 
 import io.mockk.every
 import io.mockk.mockk
-import nexters.weski.ski_resort.ResortStatus
-import nexters.weski.ski_resort.SkiResort
+import nexters.weski.ski.resort.ResortStatus
+import nexters.weski.ski.resort.SkiResort
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test

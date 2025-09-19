@@ -1,6 +1,6 @@
 package nexters.weski.slope
 
-import nexters.weski.ski_resort.SkiResortRepository
+import nexters.weski.ski.resort.SkiResortRepository
 import nexters.weski.webcam.WebcamRepository
 import org.springframework.stereotype.Service
 
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 class SlopeService(
     private val skiResortRepository: SkiResortRepository,
     private val slopeRepository: SlopeRepository,
-    private val webcamRepository: WebcamRepository
+    private val webcamRepository: WebcamRepository,
 ) {
     fun getSlopesAndWebcams(resortId: Long): SlopeResponseDto {
         val skiResort = skiResortRepository.findById(resortId).orElseThrow { Exception("Resort not found") }
@@ -17,22 +17,20 @@ class SlopeService(
 
         return SlopeResponseDto.fromEntities(skiResort, slopes, webcams)
     }
-    fun getTotalSlopeCount(resortId: Long): Int {
-        return slopeRepository.countBySkiResortResortId(resortId)
-    }
 
-    fun getOpeningSlopeCount(resortId: Long): Int {
-        return slopeRepository.countOperatingSlopesByResortId(resortId)
-    }
+    fun getTotalSlopeCount(resortId: Long): Int = slopeRepository.countBySkiResortResortId(resortId)
+
+    fun getOpeningSlopeCount(resortId: Long): Int = slopeRepository.countOperatingSlopesByResortId(resortId)
 
     fun updateSlopeOpeningStatus(
         resortId: Long,
         slopeName: String,
         timeType: String,
-        isOpen: String
+        isOpen: String,
     ) {
-        val slope = slopeRepository.findBySkiResortResortIdAndName(resortId, slopeName)
-            ?: throw Exception("Slope not found")
+        val slope =
+            slopeRepository.findBySkiResortResortIdAndName(resortId, slopeName)
+                ?: throw Exception("Slope not found")
 
         when (timeType) {
             "주간" -> slope.isDayOperating = isOpen == "Y"

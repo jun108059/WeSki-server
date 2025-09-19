@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class WeatherScheduler(
-    private val externalWeatherService: ExternalWeatherService
+    private val externalWeatherService: ExternalWeatherService,
 ) {
     @Scheduled(cron = "0 0 * * * ?")
     fun scheduleWeatherUpdate() {

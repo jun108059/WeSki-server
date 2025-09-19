@@ -8,20 +8,18 @@ data class WebcamDto(
     val isExternal: Boolean?,
 ) {
     companion object {
-        fun fromEntity(entity: Webcam): WebcamDto {
-            return WebcamDto(
+        fun fromEntity(entity: Webcam): WebcamDto =
+            WebcamDto(
                 name = entity.name,
                 number = entity.number,
                 description = entity.description,
                 url = entity.url,
-                isExternal = isExternal(entity.url)
+                isExternal = isExternal(entity.url),
             )
-        }
 
-        private fun isExternal(url: String?): Boolean {
-            return url?.let {
+        private fun isExternal(url: String?): Boolean =
+            url?.let {
                 !it.endsWith("m3u8")
             } ?: false
-        }
     }
 }

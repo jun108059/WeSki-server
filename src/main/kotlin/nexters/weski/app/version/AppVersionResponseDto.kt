@@ -1,4 +1,4 @@
-package nexters.weski.app_version
+package nexters.weski.app.version
 
 import io.swagger.v3.oas.annotations.media.Schema
 

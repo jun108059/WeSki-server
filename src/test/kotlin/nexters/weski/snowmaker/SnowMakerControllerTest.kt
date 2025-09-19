@@ -1,4 +1,4 @@
-package nexters.weski.snow_maker
+package nexters.weski.snowmaker
 
 
 import com.ninjasquad.springmockk.MockkBean
