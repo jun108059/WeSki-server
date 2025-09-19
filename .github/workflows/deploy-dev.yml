@@ -41,6 +41,11 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
+      - name: Railway Login
+        run: railway login
+        env:
+          RAILWAY_TOKEN_DEV: ${{ secrets.RAILWAY_TOKEN_DEV }}
+
       - name: Deploy to Railway Dev
         run: railway up --service WeSki-server-dev
         env:
