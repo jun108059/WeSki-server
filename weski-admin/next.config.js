@@ -52,10 +52,6 @@ const nextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
-  // 빌드 최적화
-  experimental: {
-    optimizePackageImports: ['antd'],
-  },
   
   // Ant Design SSR 비활성화
   transpilePackages: ['antd'],
@@ -69,6 +65,16 @@ const nextConfig = {
   // ESLint 설정
   eslint: {
     ignoreDuringBuilds: false,
+  },
+
+  // Railway 환경에서 안정적인 빌드를 위한 설정
+  output: 'standalone',
+  
+  // 정적 생성 최적화 (기존 experimental 설정과 병합)
+  experimental: {
+    optimizePackageImports: ['antd'],
+    // SSG 관련 설정
+    isrMemoryCacheSize: 0,
   },
 };
 
