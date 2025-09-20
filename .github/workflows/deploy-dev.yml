@@ -35,5 +35,5 @@ jobs:
 
       - name: Deploy to Railway Dev
         env:
-          RAILWAY_TOKEN_DEV: ${{ secrets.RAILWAY_TOKEN_DEV }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
         run: railway up --detach --service ${{ secrets.RAILWAY_SERVICE_ID_DEV }}
