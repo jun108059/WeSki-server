@@ -4,13 +4,18 @@ on:
   push:
     branches:
       - develop
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-weski-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -19,34 +24,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Setup Gradle (cache)
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run tests
         run: ./gradlew test
 
-      - name: Build application
-        run: ./gradlew clean build -x test
-
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Railway Login
-        run: railway login
-        env:
-          RAILWAY_TOKEN_DEV: ${{ secrets.RAILWAY_TOKEN_DEV }}
-
       - name: Deploy to Railway Dev
-        run: railway up --service WeSki-server-dev
         env:
           RAILWAY_TOKEN_DEV: ${{ secrets.RAILWAY_TOKEN_DEV }}
+        run: railway up --detach --service $RAILWAY_SERVICE_ID_DEV --project $RAILWAY_PROJECT_ID
