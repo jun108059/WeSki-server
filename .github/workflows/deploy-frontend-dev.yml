@@ -1,0 +1,56 @@
+name: Deploy Frontend to Development
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'weski-admin/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-frontend-dev:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'weski-admin/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: weski-admin
+        run: npm ci
+
+      - name: Type check
+        working-directory: weski-admin
+        run: npm run type-check
+
+      - name: Lint
+        working-directory: weski-admin
+        run: npm run lint
+
+      - name: Build application
+        working-directory: weski-admin
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.BACKEND_URL_DEV }}
+          RAILWAY_ENVIRONMENT: development
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Dev
+        working-directory: weski-admin
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
+        run: railway up --detach --service ${{ secrets.RAILWAY_SERVICE_ID_FRONTEND_DEV }}
