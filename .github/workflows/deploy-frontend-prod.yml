@@ -44,6 +44,8 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.BACKEND_URL_PROD }}
+          RAILWAY_ENVIRONMENT: production
+          NODE_ENV: production
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli

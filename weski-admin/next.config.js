@@ -10,16 +10,28 @@ const nextConfig = {
     if (process.env.NEXT_PUBLIC_API_URL) {
       // 명시적으로 설정된 API URL이 있으면 사용
       backendUrl = process.env.NEXT_PUBLIC_API_URL;
-    } else if (process.env.NODE_ENV === 'production') {
-      // 프로덕션 환경
-      backendUrl = 'https://weski-server-production.up.railway.app';
-    } else if (process.env.NODE_ENV === 'development' && process.env.RAILWAY_ENVIRONMENT) {
-      // Railway 개발 환경 (배포된 개발 서버)
-      backendUrl = 'https://weski-server-dev-development.up.railway.app';
+    } else if (process.env.RAILWAY_ENVIRONMENT === 'production') {
+      // Railway 프로덕션 환경
+      backendUrl = process.env.RAILWAY_PRIVATE_DOMAIN 
+        ? `http://${process.env.RAILWAY_PRIVATE_DOMAIN}`
+        : 'https://weski-server-production.up.railway.app';
+    } else if (process.env.RAILWAY_ENVIRONMENT === 'development') {
+      // Railway 개발 환경
+      backendUrl = process.env.RAILWAY_PRIVATE_DOMAIN
+        ? `http://${process.env.RAILWAY_PRIVATE_DOMAIN}`
+        : 'https://weski-server-dev-development.up.railway.app';
     } else {
       // 로컬 개발 환경
       backendUrl = 'http://localhost:8080';
     }
+
+    // URL 유효성 검증
+    if (!backendUrl || (!backendUrl.startsWith('http://') && !backendUrl.startsWith('https://'))) {
+      console.warn(`Invalid backend URL: ${backendUrl}, falling back to localhost`);
+      backendUrl = 'http://localhost:8080';
+    }
+
+    console.log(`Backend URL configured: ${backendUrl}`);
 
     return [
       {
