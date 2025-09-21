@@ -1,11 +1,6 @@
 name: Deploy Frontend to Development
 
 on:
-  push:
-    branches:
-      - develop
-    paths:
-      - 'weski-admin/**'
   workflow_dispatch:
 
 concurrency:
