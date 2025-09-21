@@ -15,34 +15,39 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(WeatherController::class)
 @ComponentScan(
-    excludeFilters = [ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = [JpaConfig::class, WeatherUpdateService::class]
-    )]
+    excludeFilters = [
+        ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = [JpaConfig::class, WeatherUpdateService::class],
+        ),
+    ],
 )
-class WeatherControllerTest @Autowired constructor(
-    private val mockMvc: MockMvc
-) {
+class WeatherControllerTest
+    @Autowired
+    constructor(
+        private val mockMvc: MockMvc,
+    ) {
+        @MockkBean
+        lateinit var weatherService: WeatherService
 
-    @MockkBean
-    lateinit var weatherService: WeatherService
+        @Test
+        fun `GET api_weather_resortId should return weather data`() {
+            // Given
+            val resortId = 1L
+            val weatherDto =
+                WeatherDto(
+                    resortId,
+                    CurrentWeatherDto(-5, -2, -8, -10, "눈이 내리고 있습니다.", "눈"),
+                    listOf(),
+                    listOf(),
+                )
+            every { weatherService.getWeatherByResortId(resortId) } returns weatherDto
 
-    @Test
-    fun `GET api_weather_resortId should return weather data`() {
-        // Given
-        val resortId = 1L
-        val weatherDto = WeatherDto(
-            resortId,
-            CurrentWeatherDto(-5, -2, -8, -10, "눈이 내리고 있습니다.", "눈"),
-            listOf(),
-            listOf()
-        )
-        every { weatherService.getWeatherByResortId(resortId) } returns weatherDto
-
-        // When & Then
-        mockMvc.perform(get("/api/weather/$resortId"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.currentWeather.temperature").value(-5))
-            .andExpect(jsonPath("$.currentWeather.condition").value("눈"))
+            // When & Then
+            mockMvc
+                .perform(get("/api/weather/$resortId"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.currentWeather.temperature").value(-5))
+                .andExpect(jsonPath("$.currentWeather.condition").value("눈"))
+        }
     }
-}

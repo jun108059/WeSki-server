@@ -76,7 +76,7 @@ class AdminSkiResortController(
     ): ResponseEntity<ApiResponse<Unit>> {
         adminSkiResortService.deleteSkiResort(resortId)
         return ResponseEntity.ok(
-            ApiResponse.success<Unit>("스키장이 성공적으로 삭제되었습니다"),
+            ApiResponse.success("스키장이 성공적으로 삭제되었습니다"),
         )
     }
 
@@ -85,7 +85,7 @@ class AdminSkiResortController(
     fun updateAllResortStatus(): ResponseEntity<ApiResponse<Unit>> {
         adminSkiResortService.updateAllResortStatus()
         return ResponseEntity.ok(
-            ApiResponse.success<Unit>("모든 스키장 상태가 성공적으로 업데이트되었습니다"),
+            ApiResponse.success("모든 스키장 상태가 성공적으로 업데이트되었습니다"),
         )
     }
 
@@ -94,7 +94,7 @@ class AdminSkiResortController(
     fun updateAllSlopeCount(): ResponseEntity<ApiResponse<Unit>> {
         adminSkiResortService.updateAllSlopeCount()
         return ResponseEntity.ok(
-            ApiResponse.success<Unit>("모든 스키장 슬로프 수가 성공적으로 업데이트되었습니다"),
+            ApiResponse.success("모든 스키장 슬로프 수가 성공적으로 업데이트되었습니다"),
         )
     }
 }

@@ -2,12 +2,41 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // API 프록시 설정 (개발 환경에서 CORS 문제 해결)
+  // API 프록시 설정 (환경별 백엔드 URL 자동 설정)
   async rewrites() {
+    // 환경별 백엔드 서버 URL 설정
+    let backendUrl;
+    
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      // 명시적으로 설정된 API URL이 있으면 사용
+      backendUrl = process.env.NEXT_PUBLIC_API_URL;
+    } else if (process.env.RAILWAY_ENVIRONMENT === 'production') {
+      // Railway 프로덕션 환경
+      backendUrl = process.env.RAILWAY_PRIVATE_DOMAIN 
+        ? `http://${process.env.RAILWAY_PRIVATE_DOMAIN}`
+        : 'https://weski-server-production.up.railway.app';
+    } else if (process.env.RAILWAY_ENVIRONMENT === 'development') {
+      // Railway 개발 환경
+      backendUrl = process.env.RAILWAY_PRIVATE_DOMAIN
+        ? `http://${process.env.RAILWAY_PRIVATE_DOMAIN}`
+        : 'https://weski-server-dev-development.up.railway.app';
+    } else {
+      // 로컬 개발 환경
+      backendUrl = 'http://localhost:8080';
+    }
+
+    // URL 유효성 검증
+    if (!backendUrl || (!backendUrl.startsWith('http://') && !backendUrl.startsWith('https://'))) {
+      console.warn(`Invalid backend URL: ${backendUrl}, falling back to localhost`);
+      backendUrl = 'http://localhost:8080';
+    }
+
+    console.log(`Backend URL configured: ${backendUrl}`);
+
     return [
       {
         source: '/api/admin/:path*',
-        destination: 'http://localhost:8080/api/admin/:path*',
+        destination: `${backendUrl}/api/admin/:path*`,
       },
     ];
   },
@@ -23,10 +52,6 @@ const nextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
-  // 빌드 최적화
-  experimental: {
-    optimizePackageImports: ['antd'],
-  },
   
   // Ant Design SSR 비활성화
   transpilePackages: ['antd'],
@@ -40,6 +65,16 @@ const nextConfig = {
   // ESLint 설정
   eslint: {
     ignoreDuringBuilds: false,
+  },
+
+  // Railway 환경에서 안정적인 빌드를 위한 설정
+  output: 'standalone',
+  
+  // 정적 생성 최적화 (기존 experimental 설정과 병합)
+  experimental: {
+    optimizePackageImports: ['antd'],
+    // SSG 관련 설정
+    isrMemoryCacheSize: 0,
   },
 };
 
