@@ -1,11 +1,6 @@
 name: Deploy Frontend to Production
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'weski-admin/**'
   workflow_dispatch:
 
 concurrency:
