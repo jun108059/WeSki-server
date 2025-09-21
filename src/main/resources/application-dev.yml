@@ -38,3 +38,8 @@ tmap:
 
 server:
   port: ${PORT:8080}
+
+app:
+  swagger:
+    server-url:
+      dev: ${SWAGGER_SERVER_URL_DEV}
