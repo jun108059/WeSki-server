@@ -1,6 +1,8 @@
 spring:
   application:
     name: weski-prod
+  profiles:
+    active: prod
   datasource:
     url: ${MYSQL_URL}
     username: ${MYSQL_USER}
@@ -38,3 +40,8 @@ tmap:
 
 server:
   port: ${PORT:8080}
+
+app:
+  swagger:
+    server-url:
+      prod: ${SWAGGER_SERVER_URL_PROD:https://weski-server-production.up.railway.app}

@@ -1,6 +1,8 @@
 spring:
   application:
     name: weski-local
+  profiles:
+    active: local
   datasource:
     url: ${MYSQL_URL}
     username: ${MYSQL_USER}
@@ -40,3 +42,8 @@ tmap:
 
 server:
   port: ${PORT:8080}
+
+app:
+  swagger:
+    server-url:
+      local: ${SWAGGER_SERVER_URL_LOCAL:http://localhost:8080}

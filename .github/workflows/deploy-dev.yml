@@ -33,4 +33,6 @@ jobs:
       - name: Deploy to Railway Dev
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
+          SPRING_PROFILES_ACTIVE: dev
+          SWAGGER_SERVER_URL_DEV: ${{ secrets.SWAGGER_SERVER_URL_DEV }}
         run: railway up --detach --service ${{ secrets.RAILWAY_SERVICE_ID_DEV }}
