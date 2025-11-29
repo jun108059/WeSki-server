@@ -1,7 +1,7 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import {
   Form,
   Input,
@@ -17,76 +17,94 @@ import {
   Space,
   Spin,
   Alert,
-} from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, EditOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { skiResortApi } from '@/api/skiResortApi';
-import type { AdminSkiResortResponse, UpdateSkiResortRequest } from '@/types/skiResort';
+  Table,
+  Tag,
+  Modal,
+  Switch,
+} from 'antd'
+import { ArrowLeftOutlined, SaveOutlined, EditOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
+import { skiResortApi } from '@/api/skiResortApi'
+import type {
+  AdminSkiResortResponse,
+  UpdateSkiResortRequest,
+  Slope,
+  UpdateSlopeRequest,
+} from '@/types/skiResort'
 
-const { Title, Text } = Typography;
-const { Option } = Select;
+const { Title, Text } = Typography
+const { Option } = Select
 
 export default function SkiResortDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [skiResort, setSkiResort] = useState<AdminSkiResortResponse | null>(null);
+  const params = useParams()
+  const router = useRouter()
+  const [form] = Form.useForm()
+  const [slopeForm] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [skiResort, setSkiResort] = useState<AdminSkiResortResponse | null>(null)
+  const [slopes, setSlopes] = useState<Slope[]>([])
+  const [isSlopeModalVisible, setIsSlopeModalVisible] = useState(false)
+  const [editingSlope, setEditingSlope] = useState<Slope | null>(null)
 
-  const id = params?.id as string;
+  const id = params?.id as string
 
   // 데이터 로드
   const loadData = async () => {
-    if (!id) return;
-    
-    setLoading(true);
+    if (!id) return
+
+    setLoading(true)
     try {
-      const data = await skiResortApi.getSkiResort(Number(id));
-      setSkiResort(data);
-      
+      const [resortData, slopesData] = await Promise.all([
+        skiResortApi.getSkiResort(Number(id)),
+        skiResortApi.getSlopes(Number(id)),
+      ])
+
+      setSkiResort(resortData)
+      setSlopes(slopesData)
+
       // 폼 데이터 설정
       form.setFieldsValue({
-        ...data,
-        openingDate: data.openingDate ? dayjs(data.openingDate) : null,
-        closingDate: data.closingDate ? dayjs(data.closingDate) : null,
-      });
+        ...resortData,
+        openingDate: resortData.openingDate ? dayjs(resortData.openingDate) : null,
+        closingDate: resortData.closingDate ? dayjs(resortData.closingDate) : null,
+      })
     } catch (error: any) {
-      console.error('데이터 로드 실패:', error);
-      message.error(error.response?.data?.message || '스키장 정보를 불러오는데 실패했습니다');
+      console.error('데이터 로드 실패:', error)
+      message.error(error.response?.data?.message || '스키장 정보를 불러오는데 실패했습니다')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    loadData();
-  }, [id]);
+    loadData()
+  }, [id, loadData])
 
   // 폼 제출 처리
   const handleSubmit = async (values: any) => {
-    if (!id) return;
-    
-    setSaveLoading(true);
+    if (!id) return
+
+    setSaveLoading(true)
     try {
       const requestData: UpdateSkiResortRequest = {
         ...values,
         openingDate: values.openingDate?.format('YYYY-MM-DD'),
         closingDate: values.closingDate?.format('YYYY-MM-DD'),
-      };
+      }
 
-      const updatedData = await skiResortApi.updateSkiResort(Number(id), requestData);
-      setSkiResort(updatedData);
-      setIsEditing(false);
-      message.success('스키장 정보가 성공적으로 수정되었습니다');
+      const updatedData = await skiResortApi.updateSkiResort(Number(id), requestData)
+      setSkiResort(updatedData)
+      setIsEditing(false)
+      message.success('스키장 정보가 성공적으로 수정되었습니다')
     } catch (error: any) {
-      console.error('스키장 수정 실패:', error);
-      message.error(error.response?.data?.message || '스키장 수정에 실패했습니다');
+      console.error('스키장 수정 실패:', error)
+      message.error(error.response?.data?.message || '스키장 수정에 실패했습니다')
     } finally {
-      setSaveLoading(false);
+      setSaveLoading(false)
     }
-  };
+  }
 
   // 편집 취소
   const handleCancelEdit = () => {
@@ -95,17 +113,106 @@ export default function SkiResortDetailPage() {
         ...skiResort,
         openingDate: skiResort.openingDate ? dayjs(skiResort.openingDate) : null,
         closingDate: skiResort.closingDate ? dayjs(skiResort.closingDate) : null,
-      });
+      })
     }
-    setIsEditing(false);
-  };
+    setIsEditing(false)
+  }
+
+  // 슬로프 편집 모달 열기
+  const showSlopeEditModal = (slope: Slope) => {
+    setEditingSlope(slope)
+    slopeForm.setFieldsValue({
+      ...slope,
+      webcamNumber: slope.webcamNo, // webcamNo를 webcamNumber로 매핑
+    })
+    setIsSlopeModalVisible(true)
+  }
+
+  // 슬로프 수정 제출
+  const handleSlopeSubmit = async () => {
+    if (!editingSlope) return
+
+    try {
+      const values = await slopeForm.validateFields()
+      const requestData: UpdateSlopeRequest = {
+        ...values,
+      }
+
+      await skiResortApi.updateSlope(editingSlope.slopeId, requestData)
+
+      message.success('슬로프 정보가 수정되었습니다')
+      setIsSlopeModalVisible(false)
+
+      // 슬로프 목록 새로고침
+      const updatedSlopes = await skiResortApi.getSlopes(Number(id))
+      setSlopes(updatedSlopes)
+    } catch (error: any) {
+      console.error('슬로프 수정 실패:', error)
+      message.error('슬로프 수정에 실패했습니다')
+    }
+  }
+
+  // 슬로프 테이블 컬럼
+  const slopeColumns = [
+    {
+      title: 'ID',
+      dataIndex: 'slopeId',
+      key: 'slopeId',
+      width: 80,
+    },
+    {
+      title: '슬로프명',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: '난이도',
+      dataIndex: 'difficulty',
+      key: 'difficulty',
+      render: (difficulty: string) => {
+        let color = 'default'
+        if (difficulty === '초급') color = 'green'
+        if (difficulty === '중급') color = 'blue'
+        if (difficulty === '상급') color = 'red'
+        if (difficulty === '최상급') color = 'purple'
+        return <Tag color={color}>{difficulty}</Tag>
+      },
+    },
+    {
+      title: '주간',
+      dataIndex: 'isDayOperating',
+      key: 'isDayOperating',
+      render: (val: boolean) => (val ? <Tag color="blue">운영</Tag> : <Tag>미운영</Tag>),
+    },
+    {
+      title: '야간',
+      dataIndex: 'isNightOperating',
+      key: 'isNightOperating',
+      render: (val: boolean) => (val ? <Tag color="blue">운영</Tag> : <Tag>미운영</Tag>),
+    },
+    {
+      title: '심야',
+      dataIndex: 'isLateNightOperating',
+      key: 'isLateNightOperating',
+      render: (val: boolean) => (val ? <Tag color="blue">운영</Tag> : <Tag>미운영</Tag>),
+    },
+    {
+      title: '작업',
+      key: 'action',
+      render: (_: any, record: Slope) => (
+        <Button size="small" icon={<EditOutlined />} onClick={() => showSlopeEditModal(record)}>
+          수정
+        </Button>
+      ),
+    },
+  ]
 
   if (loading) {
     return (
       <div className="loading-container">
         <Spin size="large" />
       </div>
-    );
+    )
   }
 
   if (!skiResort) {
@@ -116,14 +223,10 @@ export default function SkiResortDetailPage() {
           description="요청하신 스키장 정보가 존재하지 않습니다."
           type="error"
           showIcon
-          action={
-            <Button onClick={() => router.push('/ski-resorts')}>
-              목록으로 돌아가기
-            </Button>
-          }
+          action={<Button onClick={() => router.push('/ski-resorts')}>목록으로 돌아가기</Button>}
         />
       </div>
-    );
+    )
   }
 
   return (
@@ -132,10 +235,7 @@ export default function SkiResortDetailPage() {
       <div className="page-header">
         <Breadcrumb style={{ marginBottom: 8 }}>
           <Breadcrumb.Item>관리자</Breadcrumb.Item>
-          <Breadcrumb.Item 
-            onClick={() => router.push('/ski-resorts')} 
-            className="cursor-pointer"
-          >
+          <Breadcrumb.Item onClick={() => router.push('/ski-resorts')} className="cursor-pointer">
             스키장 관리
           </Breadcrumb.Item>
           <Breadcrumb.Item>{skiResort.name}</Breadcrumb.Item>
@@ -145,11 +245,7 @@ export default function SkiResortDetailPage() {
             {skiResort.name} 상세 정보
           </Title>
           {!isEditing && (
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => setIsEditing(true)}
-            >
+            <Button type="primary" icon={<EditOutlined />} onClick={() => setIsEditing(true)}>
               수정하기
             </Button>
           )}
@@ -170,11 +266,11 @@ export default function SkiResortDetailPage() {
             {/* 기본 정보 */}
             <Col xs={24} lg={12}>
               <Title level={4}>기본 정보</Title>
-              
+
               <Form.Item label="스키장 ID">
                 <Text strong>{skiResort.resortId}</Text>
               </Form.Item>
-              
+
               <Form.Item
                 name="name"
                 label="스키장명"
@@ -233,7 +329,7 @@ export default function SkiResortDetailPage() {
             {/* 운영 시간 정보 */}
             <Col xs={24} lg={12}>
               <Title level={4}>운영 시간</Title>
-              
+
               <Form.Item name="dayOperatingHours" label="주간 운영시간">
                 <Input placeholder="예: 09:00~16:00" />
               </Form.Item>
@@ -264,7 +360,7 @@ export default function SkiResortDetailPage() {
             {/* 위치 정보 */}
             <Col xs={24} lg={12}>
               <Title level={4}>위치 정보</Title>
-              
+
               <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item
@@ -306,7 +402,7 @@ export default function SkiResortDetailPage() {
             {/* 메타데이터 */}
             <Col xs={24} lg={12}>
               <Title level={4}>메타데이터</Title>
-              
+
               <Form.Item label="생성일시">
                 <Text>{new Date(skiResort.createdAt).toLocaleString('ko-KR')}</Text>
               </Form.Item>
@@ -317,7 +413,9 @@ export default function SkiResortDetailPage() {
 
               {isEditing && (
                 <Card size="small" style={{ backgroundColor: '#f6ffed' }}>
-                  <p><strong>수정 안내:</strong></p>
+                  <p>
+                    <strong>수정 안내:</strong>
+                  </p>
                   <ul>
                     <li>슬로프 수는 자동으로 계산됩니다</li>
                     <li>운영 상태는 날짜 기준으로 자동 업데이트 가능합니다</li>
@@ -331,17 +429,12 @@ export default function SkiResortDetailPage() {
           {/* 폼 액션 버튼 */}
           <div className="form-actions">
             <Space>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => router.push('/ski-resorts')}
-              >
+              <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/ski-resorts')}>
                 목록으로
               </Button>
               {isEditing ? (
                 <>
-                  <Button onClick={handleCancelEdit}>
-                    취소
-                  </Button>
+                  <Button onClick={handleCancelEdit}>취소</Button>
                   <Button
                     type="primary"
                     htmlType="submit"
@@ -352,11 +445,7 @@ export default function SkiResortDetailPage() {
                   </Button>
                 </>
               ) : (
-                <Button
-                  type="primary"
-                  icon={<EditOutlined />}
-                  onClick={() => setIsEditing(true)}
-                >
+                <Button type="primary" icon={<EditOutlined />} onClick={() => setIsEditing(true)}>
                   수정하기
                 </Button>
               )}
@@ -364,6 +453,99 @@ export default function SkiResortDetailPage() {
           </div>
         </Form>
       </Card>
+
+      {/* 슬로프 목록 섹션 */}
+      <Card className="content-card" style={{ marginTop: 24 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16,
+          }}
+        >
+          <Title level={4} style={{ margin: 0 }}>
+            슬로프 목록
+          </Title>
+        </div>
+
+        <Table
+          columns={slopeColumns}
+          dataSource={slopes}
+          rowKey="slopeId"
+          pagination={false}
+          size="small"
+        />
+      </Card>
+
+      {/* 슬로프 수정 모달 */}
+      <Modal
+        title="슬로프 정보 수정"
+        open={isSlopeModalVisible}
+        onOk={handleSlopeSubmit}
+        onCancel={() => setIsSlopeModalVisible(false)}
+        okText="저장"
+        cancelText="취소"
+      >
+        <Form form={slopeForm} layout="vertical">
+          <Form.Item
+            name="name"
+            label="슬로프명"
+            rules={[{ required: true, message: '슬로프명을 입력해주세요' }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="difficulty"
+            label="난이도"
+            rules={[{ required: true, message: '난이도를 선택해주세요' }]}
+          >
+            <Select>
+              <Option value="초급">초급</Option>
+              <Option value="초중급">초중급</Option>
+              <Option value="중급">중급</Option>
+              <Option value="중상급">중상급</Option>
+              <Option value="상급">상급</Option>
+              <Option value="최상급">최상급</Option>
+              <Option value="파크">파크</Option>
+              <Option value="익스트림">익스트림</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="webcamNumber" label="웹캠 번호">
+            <Input type="number" />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="isDayOperating" label="주간 운영" valuePropName="checked">
+                <Switch checkedChildren="운영" unCheckedChildren="미운영" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="isNightOperating" label="야간 운영" valuePropName="checked">
+                <Switch checkedChildren="운영" unCheckedChildren="미운영" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="isLateNightOperating" label="심야 운영" valuePropName="checked">
+                <Switch checkedChildren="운영" unCheckedChildren="미운영" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="isDawnOperating" label="새벽 운영" valuePropName="checked">
+                <Switch checkedChildren="운영" unCheckedChildren="미운영" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="isMidnightOperating" label="자정 운영" valuePropName="checked">
+                <Switch checkedChildren="운영" unCheckedChildren="미운영" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
     </div>
-  );
+  )
 }

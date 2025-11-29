@@ -1,0 +1,10 @@
+# build / deps
+node_modules
+
+# generated
+*.snap
+coverage
+
+# non-code
+*.md
+*.json

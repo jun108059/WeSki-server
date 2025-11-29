@@ -42,4 +42,25 @@ class SlopeService(
         }
         slopeRepository.save(slope)
     }
+
+    fun updateSlope(
+        slopeId: Long,
+        request: UpdateSlopeRequest,
+    ): SlopeDto {
+        val slope =
+            slopeRepository
+                .findById(slopeId)
+                .orElseThrow { Exception("Slope not found") }
+
+        slope.name = request.name
+        slope.difficulty = request.difficulty
+        slope.webcamNumber = request.webcamNumber
+        slope.isDayOperating = request.isDayOperating
+        slope.isNightOperating = request.isNightOperating
+        slope.isLateNightOperating = request.isLateNightOperating
+        slope.isDawnOperating = request.isDawnOperating
+        slope.isMidnightOperating = request.isMidnightOperating
+
+        return SlopeDto.fromEntity(slopeRepository.save(slope))
+    }
 }

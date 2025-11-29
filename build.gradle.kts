@@ -29,6 +29,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
     implementation("org.springframework.boot:spring-boot-starter-quartz")
+    implementation("org.springframework.boot:spring-boot-starter-batch")
+    implementation("org.jsoup:jsoup:1.17.2")
     runtimeOnly("com.mysql:mysql-connector-j")
 
     testImplementation("org.mockito:mockito-core:4.11.0")

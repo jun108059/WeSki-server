@@ -82,25 +82,22 @@ class AdminSkiResortService(
             }
         }
 
-        val updatedSkiResort =
-            existingSkiResort.copy(
-                name = request.name ?: existingSkiResort.name,
-                status = request.status ?: existingSkiResort.status,
-                openingDate = request.openingDate ?: existingSkiResort.openingDate,
-                closingDate = request.closingDate ?: existingSkiResort.closingDate,
-                dayOperatingHours = request.dayOperatingHours ?: existingSkiResort.dayOperatingHours,
-                nightOperatingHours = request.nightOperatingHours ?: existingSkiResort.nightOperatingHours,
-                lateNightOperatingHours = request.lateNightOperatingHours ?: existingSkiResort.lateNightOperatingHours,
-                dawnOperatingHours = request.dawnOperatingHours ?: existingSkiResort.dawnOperatingHours,
-                midnightOperatingHours = request.midnightOperatingHours ?: existingSkiResort.midnightOperatingHours,
-                snowfallTime = request.snowfallTime ?: existingSkiResort.snowfallTime,
-                xCoordinate = request.xCoordinate ?: existingSkiResort.xCoordinate,
-                yCoordinate = request.yCoordinate ?: existingSkiResort.yCoordinate,
-                detailedAreaCode = request.detailedAreaCode ?: existingSkiResort.detailedAreaCode,
-                broadAreaCode = request.broadAreaCode ?: existingSkiResort.broadAreaCode,
-            )
+        request.name?.let { existingSkiResort.name = it }
+        request.status?.let { existingSkiResort.status = it }
+        request.openingDate?.let { existingSkiResort.openingDate = it }
+        request.closingDate?.let { existingSkiResort.closingDate = it }
+        request.dayOperatingHours?.let { existingSkiResort.dayOperatingHours = it }
+        request.nightOperatingHours?.let { existingSkiResort.nightOperatingHours = it }
+        request.lateNightOperatingHours?.let { existingSkiResort.lateNightOperatingHours = it }
+        request.dawnOperatingHours?.let { existingSkiResort.dawnOperatingHours = it }
+        request.midnightOperatingHours?.let { existingSkiResort.midnightOperatingHours = it }
+        request.snowfallTime?.let { existingSkiResort.snowfallTime = it }
+        request.xCoordinate?.let { existingSkiResort.xCoordinate = it }
+        request.yCoordinate?.let { existingSkiResort.yCoordinate = it }
+        request.detailedAreaCode?.let { existingSkiResort.detailedAreaCode = it }
+        request.broadAreaCode?.let { existingSkiResort.broadAreaCode = it }
 
-        val savedSkiResort = skiResortRepository.save(updatedSkiResort)
+        val savedSkiResort = skiResortRepository.save(existingSkiResort)
         return AdminSkiResortResponse.fromEntity(savedSkiResort)
     }
 
@@ -144,8 +141,8 @@ class AdminSkiResortService(
                 }
 
             if (newStatus != skiResort.status) {
-                val updatedSkiResort = skiResort.copy(status = newStatus)
-                skiResortRepository.save(updatedSkiResort)
+                skiResort.status = newStatus
+                skiResortRepository.save(skiResort)
             }
         }
     }
@@ -160,12 +157,9 @@ class AdminSkiResortService(
             val openingSlopeCount = slopeService.getOpeningSlopeCount(skiResort.resortId)
 
             if (totalSlopeCount != skiResort.totalSlopes || openingSlopeCount != skiResort.openSlopes) {
-                val updatedSkiResort =
-                    skiResort.copy(
-                        totalSlopes = totalSlopeCount,
-                        openSlopes = openingSlopeCount,
-                    )
-                skiResortRepository.save(updatedSkiResort)
+                skiResort.totalSlopes = totalSlopeCount
+                skiResort.openSlopes = openingSlopeCount
+                skiResortRepository.save(skiResort)
             }
         }
     }

@@ -15,34 +15,44 @@ import java.time.LocalDate
 
 @Entity
 @Table(name = "ski_resorts")
-data class SkiResort(
+class SkiResort(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val resortId: Long = 0,
-    val name: String,
+    var name: String,
     @Enumerated(EnumType.STRING)
-    val status: ResortStatus,
-    val openingDate: LocalDate? = null,
-    val closingDate: LocalDate? = null,
-    val openSlopes: Int = 0,
-    val totalSlopes: Int = 0,
-    val dayOperatingHours: String? = null,
-    val nightOperatingHours: String? = null,
-    val lateNightOperatingHours: String? = null,
-    val dawnOperatingHours: String? = null,
-    val midnightOperatingHours: String? = null,
-    val snowfallTime: String? = null,
-    val xCoordinate: String,
-    val yCoordinate: String,
-    val xRealCoordinate: Double? = null,
-    val yRealCoordinate: Double? = null,
-    val detailedAreaCode: String,
-    val broadAreaCode: String,
+    var status: ResortStatus,
+    var openingDate: LocalDate? = null,
+    var closingDate: LocalDate? = null,
+    var openSlopes: Int = 0,
+    var totalSlopes: Int = 0,
+    var dayOperatingHours: String? = null,
+    var nightOperatingHours: String? = null,
+    var lateNightOperatingHours: String? = null,
+    var dawnOperatingHours: String? = null,
+    var midnightOperatingHours: String? = null,
+    var snowfallTime: String? = null,
+    var xCoordinate: String,
+    var yCoordinate: String,
+    var xRealCoordinate: Double? = null,
+    var yRealCoordinate: Double? = null,
+    var detailedAreaCode: String,
+    var broadAreaCode: String,
     @OneToMany(mappedBy = "skiResort", fetch = jakarta.persistence.FetchType.LAZY)
     val slopes: List<Slope> = emptyList(),
     @OneToMany(mappedBy = "skiResort", fetch = jakarta.persistence.FetchType.LAZY)
     val webcams: List<Webcam> = emptyList(),
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SkiResort) return false
+        return resortId != 0L && resortId == other.resortId
+    }
+
+    override fun hashCode(): Int = 31
+
+    override fun toString(): String = "SkiResort(resortId=$resortId, name='$name')"
+}
 
 enum class ResortStatus {
     운영중,
