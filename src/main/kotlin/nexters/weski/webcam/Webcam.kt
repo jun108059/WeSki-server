@@ -12,7 +12,7 @@ import nexters.weski.ski.resort.SkiResort
 
 @Entity
 @Table(name = "webcams")
-data class Webcam(
+class Webcam(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
@@ -23,4 +23,14 @@ data class Webcam(
     @ManyToOne
     @JoinColumn(name = "resort_id")
     val skiResort: SkiResort,
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Webcam) return false
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = 31
+
+    override fun toString(): String = "Webcam(id=$id, name='$name', url='$url')"
+}
