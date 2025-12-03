@@ -14,14 +14,14 @@ import nexters.weski.ski.resort.SkiResort
 
 @Entity
 @Table(name = "slopes")
-data class Slope(
+class Slope(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    val name: String,
-    val webcamNumber: Int? = null,
+    var name: String,
+    var webcamNumber: Int? = null,
     @Enumerated(EnumType.STRING)
-    val difficulty: DifficultyLevel,
+    var difficulty: DifficultyLevel,
     var isDayOperating: Boolean = false,
     var isNightOperating: Boolean = false,
     var isLateNightOperating: Boolean = false,
@@ -30,7 +30,17 @@ data class Slope(
     @ManyToOne
     @JoinColumn(name = "resort_id")
     val skiResort: SkiResort,
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Slope) return false
+        return id != 0L && id == other.id
+    }
+
+    override fun hashCode(): Int = 31
+
+    override fun toString(): String = "Slope(id=$id, name='$name', difficulty=$difficulty)"
+}
 
 enum class DifficultyLevel {
     초급,

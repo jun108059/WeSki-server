@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service
 @Service
 class AppVersionCheckService {
     companion object {
-        const val IOS_MIN_VERSION = "3.0.2"
-        const val ANDROID_MIN_VERSION = "3.0.1"
+        const val IOS_MIN_VERSION = "3.1.2"
+        const val ANDROID_MIN_VERSION = "3.1.2"
     }
 
     fun getAppVersion(

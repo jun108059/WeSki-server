@@ -31,9 +31,7 @@ class SkiResortService(
 
     fun getSkiResortAndWeather(resortId: Long): SkiResortResponseDto {
         val skiResort =
-            skiResortRepository
-                .findById(resortId)
-                .orElseThrow { IllegalArgumentException("해당 ID의 스키장이 존재하지 않습니다.") }
+            skiResortRepository.findById(resortId).orElseThrow { IllegalArgumentException("해당 ID의 스키장이 존재하지 않습니다.") }
 
         val currentWeather = currentWeatherRepository.findBySkiResortResortId(skiResort.resortId)
         val weeklyWeather =
@@ -52,17 +50,14 @@ class SkiResortService(
         date: LocalDate,
     ) {
         val skiResort =
-            skiResortRepository
-                .findById(resortId)
-                .orElseThrow { IllegalArgumentException("해당 ID의 스키장이 존재하지 않습니다.") }
+            skiResortRepository.findById(resortId).orElseThrow { IllegalArgumentException("해당 ID의 스키장이 존재하지 않습니다.") }
 
-        val updatedSkiResort =
-            when (dateType) {
-                DateType.OPENING_DATE -> skiResort.copy(openingDate = date)
-                DateType.CLOSING_DATE -> skiResort.copy(closingDate = date)
-            }
+        when (dateType) {
+            DateType.OPENING_DATE -> skiResort.openingDate = date
+            DateType.CLOSING_DATE -> skiResort.closingDate = date
+        }
 
-        skiResortRepository.save(updatedSkiResort)
+        skiResortRepository.save(skiResort)
     }
 
     fun updateSkiResortStatus() {
@@ -80,8 +75,8 @@ class SkiResortService(
                     else -> ResortStatus.운영중
                 }
 
-            val updatedSkiResort = skiResort.copy(status = newStatus)
-            skiResortRepository.save(updatedSkiResort)
+            skiResort.status = newStatus
+            skiResortRepository.save(skiResort)
         }
     }
 
@@ -90,8 +85,9 @@ class SkiResortService(
         skiResorts.forEach { skiResort ->
             val totalSlopeCount = slopeService.getTotalSlopeCount(skiResort.resortId)
             val openingSlopeCount = slopeService.getOpeningSlopeCount(skiResort.resortId)
-            val updatedSkiResort = skiResort.copy(totalSlopes = totalSlopeCount, openSlopes = openingSlopeCount)
-            skiResortRepository.save(updatedSkiResort)
+            skiResort.totalSlopes = totalSlopeCount
+            skiResort.openSlopes = openingSlopeCount
+            skiResortRepository.save(skiResort)
         }
     }
 }
