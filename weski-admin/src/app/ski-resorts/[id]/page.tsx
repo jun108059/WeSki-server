@@ -51,7 +51,7 @@ export default function SkiResortDetailPage() {
   const id = params?.id as string
 
   // 데이터 로드
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     if (!id) return
 
     setLoading(true)
@@ -76,7 +76,7 @@ export default function SkiResortDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, form])
 
   useEffect(() => {
     loadData()
