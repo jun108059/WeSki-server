@@ -16,10 +16,10 @@ class Webcam(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    val name: String,
+    var name: String,
     val number: Int,
-    val description: String?,
-    val url: String,
+    var description: String?,
+    var url: String?,
     @ManyToOne
     @JoinColumn(name = "resort_id")
     val skiResort: SkiResort,

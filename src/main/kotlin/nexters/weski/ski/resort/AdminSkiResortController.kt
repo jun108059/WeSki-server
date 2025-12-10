@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Admin 스키장 관리 API", description = "관리자용 스키장 CRUD 작업")
 @RestController
 @RequestMapping("/api/admin/ski-resorts")
-@CrossOrigin(origins = ["http://localhost:3000", "http://localhost:5173"]) // React 개발 서버용
 class AdminSkiResortController(
     private val adminSkiResortService: AdminSkiResortService,
 ) {

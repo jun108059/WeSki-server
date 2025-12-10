@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import nexters.weski.ski.resort.ApiResponse
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Admin 슬로프 관리 API", description = "관리자용 슬로프 수정")
 @RestController
 @RequestMapping("/api/admin/slopes")
-@CrossOrigin(origins = ["http://localhost:3000", "http://localhost:5173"])
 class AdminSlopeController(
     private val slopeService: SlopeService,
 ) {

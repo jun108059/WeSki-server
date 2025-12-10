@@ -43,3 +43,5 @@ app:
   swagger:
     server-url:
       dev: ${SWAGGER_SERVER_URL_DEV}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,https://weski-admin-dev-development.up.railway.app}

@@ -6,6 +6,8 @@ import type {
   UpdateSkiResortRequest,
   Slope,
   UpdateSlopeRequest,
+  Webcam,
+  UpdateWebcamRequest,
 } from '@/types/skiResort'
 
 // API 기본 설정
@@ -118,6 +120,33 @@ export const skiResortApi = {
     })
     // SlopeResponseDto 구조에 맞게 데이터 추출
     return response.data.slopes || []
+  },
+
+  // 웹캠 목록 조회
+  async getWebcams(resortId: number): Promise<Webcam[]> {
+    // /api/slopes/{resortId} 호출 (슬로프와 웹캠 정보를 함께 반환함)
+    const response = await apiClient.get<any>(`/api/slopes/${resortId}`, {
+      baseURL: '', // baseURL 무시하고 절대 경로(현재 도메인 기준) 사용
+    })
+    // SlopeResponseDto 구조에 맞게 데이터 추출
+    return response.data.webcams || []
+  },
+
+  // 웹캠 수정
+  async updateWebcam(webcamId: number, data: UpdateWebcamRequest): Promise<Webcam> {
+    // /api/admin/webcams/{webcamId} 호출
+    const response = await apiClient.put<ApiResponse<Webcam>>(
+      `/api/admin/webcams/${webcamId}`,
+      data,
+      {
+        baseURL: '', // baseURL 무시하고 절대 경로(현재 도메인 기준) 사용
+      }
+    )
+
+    if (!response.data.data) {
+      throw new Error('웹캠 수정에 실패했습니다')
+    }
+    return response.data.data
   },
 }
 
