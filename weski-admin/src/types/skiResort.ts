@@ -91,3 +91,20 @@ export interface UpdateSlopeRequest {
   isDawnOperating: boolean
   isMidnightOperating: boolean
 }
+
+// 웹캠 타입
+export interface Webcam {
+  id: number
+  name: string
+  number: number
+  description?: string
+  url?: string
+  isExternal?: boolean
+}
+
+// 웹캠 수정 요청 DTO
+export interface UpdateWebcamRequest {
+  name?: string
+  description?: string
+  url?: string
+}
