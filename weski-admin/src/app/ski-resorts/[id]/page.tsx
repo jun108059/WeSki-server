@@ -22,7 +22,12 @@ import {
   Modal,
   Switch,
 } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, EditOutlined } from '@ant-design/icons'
+import {
+  ArrowLeftOutlined,
+  SaveOutlined,
+  EditOutlined,
+  VideoCameraOutlined,
+} from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { skiResortApi } from '@/api/skiResortApi'
 import type {
@@ -30,6 +35,7 @@ import type {
   UpdateSkiResortRequest,
   Slope,
   UpdateSlopeRequest,
+  Webcam,
 } from '@/types/skiResort'
 
 const { Title, Text } = Typography
@@ -45,6 +51,7 @@ export default function SkiResortDetailPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [skiResort, setSkiResort] = useState<AdminSkiResortResponse | null>(null)
   const [slopes, setSlopes] = useState<Slope[]>([])
+  const [webcams, setWebcams] = useState<Webcam[]>([])
   const [isSlopeModalVisible, setIsSlopeModalVisible] = useState(false)
   const [editingSlope, setEditingSlope] = useState<Slope | null>(null)
 
@@ -56,13 +63,15 @@ export default function SkiResortDetailPage() {
 
     setLoading(true)
     try {
-      const [resortData, slopesData] = await Promise.all([
+      const [resortData, slopesData, webcamsData] = await Promise.all([
         skiResortApi.getSkiResort(Number(id)),
         skiResortApi.getSlopes(Number(id)),
+        skiResortApi.getWebcams(Number(id)),
       ])
 
       setSkiResort(resortData)
       setSlopes(slopesData)
+      setWebcams(webcamsData)
 
       // 폼 데이터 설정
       form.setFieldsValue({
@@ -473,6 +482,66 @@ export default function SkiResortDetailPage() {
           columns={slopeColumns}
           dataSource={slopes}
           rowKey="slopeId"
+          pagination={false}
+          size="small"
+        />
+      </Card>
+
+      {/* 웹캠 목록 섹션 */}
+      <Card className="content-card" style={{ marginTop: 24 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16,
+          }}
+        >
+          <Title level={4} style={{ margin: 0 }}>
+            <VideoCameraOutlined /> 웹캠 목록
+          </Title>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => router.push(`/ski-resorts/${id}/webcams`)}
+          >
+            웹캠 관리
+          </Button>
+        </div>
+
+        <Table
+          columns={[
+            { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
+            { title: '번호', dataIndex: 'number', key: 'number', width: 80 },
+            { title: '이름', dataIndex: 'name', key: 'name' },
+            { title: '설명', dataIndex: 'description', key: 'description' },
+            {
+              title: 'URL',
+              dataIndex: 'url',
+              key: 'url',
+              render: (url?: string) =>
+                url ? (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      maxWidth: 200,
+                      display: 'inline-block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {url}
+                  </a>
+                ) : (
+                  <span style={{ color: '#999' }}>-</span>
+                ),
+            },
+          ]}
+          dataSource={webcams}
+          rowKey="id"
           pagination={false}
           size="small"
         />
